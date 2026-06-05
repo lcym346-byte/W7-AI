@@ -452,12 +452,13 @@ namespace AIAgentTool
             if (dr != DialogResult.Yes) return;
 
             SetStatus("編譯中...");
-            CodeCompilerService.CompileResult result = _automationService.CodeCompiler.Compile(code);
+            CompileResult result = _automationService.CodeCompiler.Compile(code);
 
             if (result.Success)
             {
                 SetStatus("編譯成功，執行中...");
-                string output = _automationService.CodeCompiler.Execute(result.OutputPath);
+                string output = _automationSestring output = _automationService.CodeCompiler.ExecuteCompiled(result.OutputPath, 30000);
+rvice.CodeCompiler.Execute(result.OutputPath);
                 AppendColoredText(rtbResult, "\n\n【執行輸出】\n" + output, Color.FromArgb(150, 255, 150));
                 SetStatus("執行完成");
             }
