@@ -204,7 +204,7 @@ namespace AIAgentTool.Services.Core
                 bestAnswer = results[0].Snippet ?? results[0].Title;
 
             // 組合結果
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            StringBuilder sb = new StringBuilder();
             sb.AppendLine("【最佳答案】");
             sb.AppendLine(bestAnswer);
             sb.AppendLine();
@@ -326,7 +326,7 @@ namespace AIAgentTool.Services.Core
                 selected.Add(indices[i]);
             selected.Sort();
 
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            StringBuilder sb = new StringBuilder();
             foreach (int idx in selected)
             {
                 sb.Append(sentences[idx]);
@@ -361,7 +361,7 @@ namespace AIAgentTool.Services.Core
                 }
 
                 // 使用 DataTable.Compute 計算
-                System.Data.DataTable dt = new System.Data.DataTable();
+                DataTable dt = new DataTable();
                 object result = dt.Compute(expr, "");
 
                 return string.Format("計算結果：{0} = {1}", expression.Trim(), result);
@@ -378,7 +378,7 @@ namespace AIAgentTool.Services.Core
         public string CompareTopics(string topicA, string topicB,
             List<SearchResult> resultsA, List<SearchResult> resultsB)
         {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            StringBuilder sb = new StringBuilder();
             sb.AppendLine(string.Format("═══ 比較分析：{0} vs {1} ═══", topicA, topicB));
             sb.AppendLine();
 
@@ -530,7 +530,7 @@ namespace AIAgentTool.Services.Core
         private string GetCombinedSnippets(List<SearchResult> results)
         {
             if (results == null || results.Count == 0) return "";
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            StringBuilder sb = new StringBuilder();
             foreach (SearchResult r in results)
             {
                 if (!string.IsNullOrEmpty(r.Snippet))
