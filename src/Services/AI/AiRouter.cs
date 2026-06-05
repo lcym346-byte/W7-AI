@@ -1,5 +1,6 @@
 using System;
 using AIAgentTool.Models;
+using System.Text;
 
 namespace AIAgentTool.Services.AI
 {
