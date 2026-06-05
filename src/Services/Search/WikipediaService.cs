@@ -177,6 +177,15 @@ public WikipediaService(WebSearchService webSearch)
         }
 
         /// <summary>
+        /// 取得條目摘要（自動多語言）— 供 TaskAutomationService 呼叫
+        /// </summary>
+        public KnowledgeItem GetArticleSummary(string query)
+        {
+            return GetSummaryMultiLang(query);
+        }
+
+
+        /// <summary>
         /// 從 Wikipedia API 回應中擷取頁面內容
         /// Wikipedia 的 JSON 結構: {"query":{"pages":{"12345":{"extract":"..."}}}}
         /// </summary>
