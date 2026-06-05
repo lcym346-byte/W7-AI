@@ -207,7 +207,7 @@ namespace AIAgentTool.Services.AI
         /// </summary>
         public string TestAllConnections()
         {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            StringBuilder sb = new StringBuilder();
 
 
             sb.Append("測試 Gemini API... ");
