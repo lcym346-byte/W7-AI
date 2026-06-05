@@ -1,0 +1,65 @@
+🔨 編譯方式
+方法一：Visual Studio 2013+
+用 Visual Studio 開啟 AIAgentTool.sln
+確認目標框架為 .NET Framework 4.0
+Build → Build Solution (Ctrl+Shift+B)
+輸出位於 src/bin/Debug/AIAgentTool.exe 或 src/bin/Release/AIAgentTool.exe
+方法二：命令列 csc.exe（無需 Visual Studio）
+Copy@echo off
+REM ═══ 在 Windows 7 命令提示字元中執行 ═══
+
+set CSC=C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe
+
+%CSC% /target:winexe /out:AIAgentTool.exe ^
+  /reference:System.dll ^
+  /reference:System.Core.dll ^
+  /reference:System.Data.dll ^
+  /reference:System.Drawing.dll ^
+  /reference:System.Management.dll ^
+  /reference:System.Web.dll ^
+  /reference:System.Web.Extensions.dll ^
+  /reference:System.Windows.Forms.dll ^
+  /reference:System.Xml.dll ^
+  /reference:System.Runtime.Serialization.dll ^
+  /reference:Microsoft.CSharp.dll ^
+  /win32icon:app.ico ^
+  Program.cs ^
+  Models\SearchResult.cs ^
+  Models\AgentTask.cs ^
+  Models\KnowledgeItem.cs ^
+  Models\AppSettings.cs ^
+  Utils\HtmlHelper.cs ^
+  Utils\ThreadSafeUI.cs ^
+  Services\AI\GeminiApiService.cs ^
+  Services\AI\DuckDuckGoAiService.cs ^
+  Services\AI\AiRouter.cs ^
+  Services\Search\WebSearchService.cs ^
+  Services\Search\WikipediaService.cs ^
+  Services\Search\WebScraperService.cs ^
+  Services\System\ProcessManagerService.cs ^
+  Services\System\SystemAutomationService.cs ^
+  Services\System\FileManagerService.cs ^
+  Services\CodeGen\CodeGeneratorService.cs ^
+  Services\CodeGen\CodeCompilerService.cs ^
+  Services\CodeGen\CodeTemplateLibrary.cs ^
+  Services\Core\AIReasoningEngine.cs ^
+  Services\Core\TaskAutomationService.cs ^
+  Services\Core\BackgroundTaskRunner.cs ^
+  UI\MainForm.cs ^
+  UI\MainForm.Designer.cs ^
+  UI\SettingsForm.cs ^
+  UI\SettingsForm.Designer.cs
+
+echo 編譯完成！
+pause
+💡 將此存為 build.bat，放在 src/ 目錄下，雙擊即可編譯。
+
+方法三：MSBuild
+Copy"C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe" AIAgentTool.csproj /p:Configuration=Release
+⚠️ Windows 7 無 SP1 注意事項
+.NET Framework 4.0 — Windows 7 RTM 可直接安裝，無需 SP1
+TLS 問題 — Program.cs 中已設置 ServicePointManager.SecurityProtocol，但 .NET 4.0 原生不支援 TLS 1.2，部分 HTTPS 網站可能連線失敗。解決方案：
+安裝 Windows 更新 KB3140245（啟用 TLS 1.2 系統支援）
+或在登錄檔中手動啟用 TLS 1.2
+字型 — UI 使用「Microsoft JhengHei UI」，Windows 7 內建此字型
+系統托盤 — 完全相容 Windows 7 的通知區域
