@@ -474,7 +474,7 @@ namespace AIAgentTool.Services.Core
             ReportProgress(60);
 
             // 嘗試編譯
-            CodeCompilerService.CompileResult compileResult = _codeCompiler.Compile(code);
+CompileResult compileResult = _codeCompiler.Compile(code);
             ReportProgress(80);
 
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
@@ -509,7 +509,7 @@ namespace AIAgentTool.Services.Core
                 string fixedCode = _codeGenerator.FixCompileErrors(code, compileResult.Errors);
                 if (!string.IsNullOrEmpty(fixedCode) && fixedCode != code)
                 {
-                    CodeCompilerService.CompileResult retryResult = _codeCompiler.Compile(fixedCode);
+CompileResult retryResult = _codeCompiler.Compile(fixedCode);
                     if (retryResult.Success)
                     {
                         sb.AppendLine();
