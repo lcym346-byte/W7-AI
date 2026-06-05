@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Diagnostics;
 
 namespace AIAgentTool.Services.System
 {
@@ -221,7 +222,7 @@ namespace AIAgentTool.Services.System
                 if (!Directory.Exists(path))
                     return string.Format("✗ 目錄不存在: {0}", path);
 
-                System.Diagnostics.Process.Start("explorer.exe", path);
+                Process.Start("explorer.exe", path);
                 return string.Format("✓ 已在檔案總管開啟: {0}", path);
             }
             catch (Exception ex)
