@@ -6,15 +6,17 @@ namespace AIAgentTool.Models
     /// <summary>
     /// 任務狀態列舉
     /// </summary>
-    public enum TaskStatus
+   public enum TaskStatus
     {
         Pending,
+        Running,
         Searching,
         Analyzing,
         Executing,
         Completed,
         Failed
     }
+
 
     /// <summary>
     /// 任務類型列舉
