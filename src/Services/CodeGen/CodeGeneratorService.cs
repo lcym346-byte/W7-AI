@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using AIAgentTool.Services.AI;
 using AIAgentTool.Utils;
+
 
 namespace AIAgentTool.Services.CodeGen
 {
@@ -88,6 +90,15 @@ namespace AIAgentTool.Services.CodeGen
 
             return null;
         }
+        /// <summary>
+        /// 請 AI 修正編譯錯誤（接受錯誤列表）
+        /// </summary>
+        public string FixCompileErrors(string source, List<string> errors)
+        {
+            string combined = string.Join("\n", errors.ToArray());
+            return FixCompileErrors(source, combined);
+        }
+
 
         /// <summary>
         /// 請 AI 修正編譯錯誤
