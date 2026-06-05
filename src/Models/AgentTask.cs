@@ -32,7 +32,7 @@ namespace AIAgentTool.Models
         Translate,
 
         // 程式碼生成
-        CodeGeneration,
+        GenerateCode,
 
         // 電腦操作
         LaunchApp,
