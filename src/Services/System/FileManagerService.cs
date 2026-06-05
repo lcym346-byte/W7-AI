@@ -141,6 +141,15 @@ namespace AIAgentTool.Services.System
         /// <summary>
         /// 搜尋檔案
         /// </summary>
+                /// <summary>
+        /// 搜尋檔案（無指定路徑，預設使用者目錄）
+        /// </summary>
+        public string SearchFiles(string keyword)
+        {
+            return SearchFiles(keyword, null);
+        }
+
+
         public string SearchFiles(string keyword, string basePath)
         {
             StringBuilder sb = new StringBuilder();
@@ -191,6 +200,14 @@ namespace AIAgentTool.Services.System
 
             return sb.ToString();
         }
+        /// <summary>
+        /// OpenInExplorer — OpenFolder 的別名，供 TaskAutomationService 呼叫
+        /// </summary>
+        public string OpenInExplorer(string path)
+        {
+            return OpenFolder(path);
+        }
+
 
         /// <summary>
         /// 開啟資料夾 (在檔案總管中)
