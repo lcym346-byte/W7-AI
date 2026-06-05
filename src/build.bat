@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-echo 開始編譯 AI 智慧代理工具...
+echo Building AIAgentTool...
 echo.
 
 C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe ^
@@ -44,9 +44,9 @@ C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe ^
 
 echo.
 if %ERRORLEVEL%==0 (
-    echo 編譯成功！輸出：%~dp0AIAgentTool.exe
+    echo BUILD OK
 ) else (
-    echo 編譯失敗，請檢查上方錯誤訊息
+    echo BUILD FAILED
 )
 echo.
 pause
