@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using AIAgentTool.Models;
+using System.Data;
 
 namespace AIAgentTool.Services.Core
 {
