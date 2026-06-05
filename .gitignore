@@ -1,0 +1,60 @@
+## ═══════════════════════════════════════════
+## Visual Studio / .NET
+## ═══════════════════════════════════════════
+
+# Build 輸出
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+build/
+bld/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.ncb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# NuGet
+packages/
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# 使用者設定（含 API Key）
+settings.json
+
+# 編譯輸出目錄
+GeneratedCode/
+*.exe
+*.dll
+*.pdb
+*.cache
+
+# OS 檔案
+.DS_Store
+*.swp
+*.swo
+*~
