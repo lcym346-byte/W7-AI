@@ -31,9 +31,15 @@ namespace AIAgentTool.Services.Search
         private readonly WebSearchService _http;
 
         public WikipediaService()
-        {
-            _http = new WebSearchService();
-        }
+{
+    _http = new WebSearchService();
+}
+
+public WikipediaService(WebSearchService webSearch)
+{
+    _http = webSearch ?? new WebSearchService();
+}
+
 
         /// <summary>
         /// 搜尋 Wikipedia 條目
