@@ -229,6 +229,15 @@ namespace AIAgentTool.Services.System
             }
         }
 
+        /// <summary>
+        /// 截取全螢幕（無參數版本）— 供 TaskAutomationService 呼叫
+        /// </summary>
+        public string CaptureScreen()
+        {
+            return CaptureScreen(null);
+        }
+
+
         // ============================================================
         // 剪貼簿操作
         // ============================================================
@@ -300,6 +309,23 @@ namespace AIAgentTool.Services.System
                 return string.Format("✗ 複製失敗: {0}", ex.Message);
             }
         }
+
+        /// <summary>
+        /// GetClipboard — GetClipboardText 的別名
+        /// </summary>
+        public string GetClipboard()
+        {
+            return GetClipboardText();
+        }
+
+        /// <summary>
+        /// SetClipboard — SetClipboardText 的別名
+        /// </summary>
+        public string SetClipboard(string text)
+        {
+            return SetClipboardText(text);
+        }
+
 
         // ============================================================
         // 系統資訊
