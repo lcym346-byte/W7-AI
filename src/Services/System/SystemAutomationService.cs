@@ -62,6 +62,12 @@ namespace AIAgentTool.Services.System
             _safetyLevel = safetyLevel;
         }
 
+        public SystemAutomationService(Models.AppSettings settings)
+        {
+            _safetyLevel = settings.Safety;
+        }
+
+
         // ============================================================
         // CMD 命令執行
         // ============================================================
