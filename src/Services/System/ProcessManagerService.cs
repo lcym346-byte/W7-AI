@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32;
+using System.ComponentModel;
 
 namespace AIAgentTool.Services.System
 {
