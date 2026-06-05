@@ -617,7 +617,7 @@ CompileResult retryResult = _codeCompiler.Compile(fixedCode);
 
         private string ExtractUrl(string text)
         {
-            System.Text.RegularExpressions.Match m =
+            Match m =
                 Regex.Match(text, @"https?://[^\s]+");
             return m.Success ? m.Value : null;
         }
