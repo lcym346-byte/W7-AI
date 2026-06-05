@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using AIAgentTool.Models;
 using AIAgentTool.Services.AI;
 using AIAgentTool.Services.Search;
 using AIAgentTool.Services.System;
 using AIAgentTool.Services.CodeGen;
+
 
 namespace AIAgentTool.Services.Core
 {
@@ -400,9 +403,9 @@ namespace AIAgentTool.Services.Core
         private void ExecuteRunCommand(AgentTask task)
         {
             string cmd = task.Query;
-            cmd = System.Text.RegularExpressions.Regex.Replace(cmd,
+            cmd = Regex.Replace(cmd,
                 @"^(cmd\s*[:：]?\s*|命令\s*[:：]?\s*|command\s*[:：]?\s*)", "",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+                RegexOptions.IgnoreCase).Trim();
 
             task.Result = _sysAutomation.ExecuteCommand(cmd);
         }
@@ -454,9 +457,9 @@ namespace AIAgentTool.Services.Core
             ReportProgress(15);
 
             string description = task.Query;
-            description = System.Text.RegularExpressions.Regex.Replace(description,
+            description = Regex.Replace(description,
                 @"^(寫程式|寫代碼|產生程式|生成代碼|generate code|write code|幫我寫|編寫)\s*[:：]?\s*",
-                "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+                "", RegexOptions.IgnoreCase).Trim();
 
             ReportStep(task, "生成程式碼中...");
             ReportProgress(30);
@@ -477,7 +480,7 @@ namespace AIAgentTool.Services.Core
 CompileResult compileResult = _codeCompiler.Compile(code);
             ReportProgress(80);
 
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            StringBuilder sb = new StringBuilder();
             sb.AppendLine("【生成的程式碼】");
             sb.AppendLine("```csharp");
             sb.AppendLine(code);
@@ -542,7 +545,7 @@ CompileResult retryResult = _codeCompiler.Compile(fixedCode);
             string[] lines = task.Query.Split(new char[] { '\n', '；', ';' },
                 StringSplitOptions.RemoveEmptyEntries);
 
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            StringBuilder sb = new StringBuilder();
             sb.AppendLine("═══ 批次執行結果 ═══");
             sb.AppendLine();
 
@@ -615,13 +618,13 @@ CompileResult retryResult = _codeCompiler.Compile(fixedCode);
         private string ExtractUrl(string text)
         {
             System.Text.RegularExpressions.Match m =
-                System.Text.RegularExpressions.Regex.Match(text, @"https?://[^\s]+");
+                Regex.Match(text, @"https?://[^\s]+");
             return m.Success ? m.Value : null;
         }
 
         private string GetTopSnippets(List<SearchResult> results, int count, int maxTotalLength)
         {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            StringBuilder sb = new StringBuilder();
             int added = 0;
             foreach (SearchResult r in results)
             {
