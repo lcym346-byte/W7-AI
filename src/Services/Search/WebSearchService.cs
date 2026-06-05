@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using AIAgentTool.Models;
 using AIAgentTool.Utils;
+using System.Diagnostics;
 
 namespace AIAgentTool.Services.Search
 {
