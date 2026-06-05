@@ -103,6 +103,15 @@ namespace AIAgentTool.Services.AI
         }
 
         /// <summary>
+        /// Ask — SendMessage 的別名，供 TaskAutomationService 呼叫
+        /// </summary>
+        public string Ask(string prompt)
+        {
+            return SendMessage(prompt, null);
+        }
+
+
+        /// <summary>
         /// 嘗試使用 Gemini API
         /// </summary>
         private string TryGemini(string prompt, string systemInstruction)
@@ -197,7 +206,8 @@ namespace AIAgentTool.Services.AI
         /// </summary>
         public string TestAllConnections()
         {
-            StringBuilder sb = new StringBuilder();
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
 
             sb.Append("測試 Gemini API... ");
             if (_gemini.IsAvailable)
@@ -217,7 +227,4 @@ namespace AIAgentTool.Services.AI
             return sb.ToString();
         }
 
-        // 需要 using System.Text 但為避免頂部重複，這裡用完整路徑
-        private class StringBuilder : System.Text.StringBuilder { }
-    }
-}
+ 
