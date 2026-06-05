@@ -29,6 +29,14 @@ namespace AIAgentTool.Services.CodeGen
                 catch { }
             }
         }
+        /// <summary>
+        /// 編譯 C# 原始碼（自動產生檔名）
+        /// </summary>
+        public CompileResult Compile(string sourceCode)
+        {
+            return Compile(sourceCode, null);
+        }
+
 
         /// <summary>
         /// 編譯 C# 原始碼為 .exe
