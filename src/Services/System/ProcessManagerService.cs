@@ -119,6 +119,15 @@ namespace AIAgentTool.Services.System
         /// <summary>
         /// 智慧啟動程式 — 支援中文別名、路徑、URL
         /// </summary>
+                /// <summary>
+        /// 啟動程式（無參數版本）
+        /// </summary>
+        public string LaunchApplication(string appName)
+        {
+            return LaunchApplication(appName, null);
+        }
+
+
         public string LaunchApplication(string appName, string arguments)
         {
             StringBuilder sb = new StringBuilder();
@@ -327,6 +336,15 @@ namespace AIAgentTool.Services.System
         /// <summary>
         /// 列出所有執行中程序
         /// </summary>
+                /// <summary>
+        /// 列出程序（預設不顯示詳細）
+        /// </summary>
+        public string ListRunningProcesses()
+        {
+            return ListRunningProcesses(false);
+        }
+
+
         public string ListRunningProcesses(bool detailed)
         {
             StringBuilder sb = new StringBuilder();
@@ -552,6 +570,15 @@ namespace AIAgentTool.Services.System
         /// <summary>
         /// 列出已安裝程式
         /// </summary>
+                /// <summary>
+        /// 列出已安裝程式（無篩選）
+        /// </summary>
+        public string ListInstalledPrograms()
+        {
+            return ListInstalledPrograms(null);
+        }
+
+
         public string ListInstalledPrograms(string filter)
         {
             StringBuilder sb = new StringBuilder();
