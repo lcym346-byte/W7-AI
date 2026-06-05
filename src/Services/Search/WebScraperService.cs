@@ -53,6 +53,15 @@ namespace AIAgentTool.Services.Search
         }
 
         /// <summary>
+        /// FetchMainContent — ExtractMainContent 的別名，供 TaskAutomationService 呼叫
+        /// </summary>
+        public string FetchMainContent(string url)
+        {
+            return ExtractMainContent(url);
+        }
+
+
+        /// <summary>
         /// 擷取網頁標題
         /// </summary>
         public string ExtractTitle(string url)
