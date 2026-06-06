@@ -7,9 +7,6 @@ namespace AIAgentTool
     {
         private System.ComponentModel.IContainer components = null;
 
-        // ═══════════════════════════════════════════
-        // 控件宣告
-        // ═══════════════════════════════════════════
         private Panel pnlTop;
         private Label lblTitle;
         private ComboBox cboTaskType;
@@ -67,9 +64,6 @@ namespace AIAgentTool
             this.components = new System.ComponentModel.Container();
             this.SuspendLayout();
 
-            // ═══════════════════════════════════════════
-            // 主窗體設定
-            // ═══════════════════════════════════════════
             this.Text = "AI 智慧代理工具 v1.0";
             this.Size = new Size(1100, 720);
             this.MinimumSize = new Size(900, 600);
@@ -79,24 +73,20 @@ namespace AIAgentTool
             this.Font = new Font("Microsoft JhengHei UI", 9F);
             this.KeyPreview = true;
 
-            // ═══════════════════════════════════════════
-            // 頂部面板
-            // ═══════════════════════════════════════════
+            // ===================== 頂部面板 =====================
             pnlTop = new Panel();
             pnlTop.Dock = DockStyle.Top;
             pnlTop.Height = 95;
             pnlTop.BackColor = Color.FromArgb(40, 40, 45);
             pnlTop.Padding = new Padding(10, 8, 10, 5);
 
-            // 標題
             lblTitle = new Label();
-            lblTitle.Text = "🤖 AI 智慧代理工具";
+            lblTitle.Text = "[AI] 智慧代理工具";
             lblTitle.Font = new Font("Microsoft JhengHei UI", 14F, FontStyle.Bold);
             lblTitle.ForeColor = Color.FromArgb(100, 180, 255);
             lblTitle.Location = new Point(12, 8);
             lblTitle.AutoSize = true;
 
-            // 任務類型下拉
             cboTaskType = new ComboBox();
             cboTaskType.DropDownStyle = ComboBoxStyle.DropDownList;
             cboTaskType.Location = new Point(12, 40);
@@ -111,7 +101,6 @@ namespace AIAgentTool
             });
             cboTaskType.SelectedIndex = 0;
 
-            // 查詢輸入框
             txtQuery = new TextBox();
             txtQuery.Location = new Point(150, 40);
             txtQuery.Size = new Size(580, 25);
@@ -120,9 +109,8 @@ namespace AIAgentTool
             txtQuery.Font = new Font("Microsoft JhengHei UI", 10F);
             txtQuery.BorderStyle = BorderStyle.FixedSingle;
 
-            // 執行按鈕
             btnExecute = new Button();
-            btnExecute.Text = "▶ 執行";
+            btnExecute.Text = "> 執行";
             btnExecute.Location = new Point(740, 38);
             btnExecute.Size = new Size(80, 28);
             btnExecute.BackColor = Color.FromArgb(60, 140, 60);
@@ -131,9 +119,8 @@ namespace AIAgentTool
             btnExecute.FlatAppearance.BorderSize = 0;
             btnExecute.Cursor = Cursors.Hand;
 
-            // 清除按鈕
             btnClear = new Button();
-            btnClear.Text = "✕ 清除";
+            btnClear.Text = "X 清除";
             btnClear.Location = new Point(825, 38);
             btnClear.Size = new Size(70, 28);
             btnClear.BackColor = Color.FromArgb(140, 60, 60);
@@ -142,9 +129,8 @@ namespace AIAgentTool
             btnClear.FlatAppearance.BorderSize = 0;
             btnClear.Cursor = Cursors.Hand;
 
-            // 設定按鈕
             btnSettings = new Button();
-            btnSettings.Text = "⚙ 設定";
+            btnSettings.Text = "| 設定";
             btnSettings.Location = new Point(900, 38);
             btnSettings.Size = new Size(70, 28);
             btnSettings.BackColor = Color.FromArgb(80, 80, 90);
@@ -160,19 +146,17 @@ namespace AIAgentTool
             pnlTop.Controls.Add(btnClear);
             pnlTop.Controls.Add(btnSettings);
 
-            // ═══════════════════════════════════════════
-            // 快捷按鈕面板
-            // ═══════════════════════════════════════════
+            // ===================== 快捷按鈕面板 =====================
             pnlQuickButtons = new Panel();
             pnlQuickButtons.Dock = DockStyle.Top;
             pnlQuickButtons.Height = 38;
             pnlQuickButtons.BackColor = Color.FromArgb(35, 35, 40);
-            pnlQuickButtons.Padding = new Padding(10, 5, 10, 5);
+            pnlQuickButtons.Padding = new Padding(5, 5, 5, 5);
 
             string[] quickLabels = new string[] {
-                "🔍搜尋", "📚研究", "📝摘要", "⚖比較", "🧮計算",
-                "💻系統", "📂檔案", "▶開啟", "⬛關閉", "📋程序",
-                "🖥CMD", "📸截圖", "✂剪貼簿", "💾程式碼", "📦批次"
+                "搜尋", "研究", "摘要", "比較", "計算",
+                "系統", "檔案", "開啟", "關閉", "程序",
+                "CMD", "截圖", "剪貼簿", "程式碼", "批次"
             };
 
             int qbX = 5;
@@ -180,26 +164,24 @@ namespace AIAgentTool
             {
                 Button qb = new Button();
                 qb.Text = quickLabels[i];
-                qb.Size = new Size(62, 26);
+                qb.Size = new Size(60, 26);
                 qb.Location = new Point(qbX, 5);
                 qb.FlatStyle = FlatStyle.Flat;
                 qb.FlatAppearance.BorderSize = 1;
                 qb.FlatAppearance.BorderColor = Color.FromArgb(70, 70, 80);
                 qb.BackColor = Color.FromArgb(50, 50, 58);
                 qb.ForeColor = Color.FromArgb(200, 200, 210);
-                qb.Font = new Font("Microsoft JhengHei UI", 7.5F);
+                qb.Font = new Font("Microsoft JhengHei UI", 8F);
                 qb.Cursor = Cursors.Hand;
                 qb.Tag = i;
                 qb.Click += QuickButton_Click;
                 qb.MouseEnter += QuickButton_MouseEnter;
                 qb.MouseLeave += QuickButton_MouseLeave;
                 pnlQuickButtons.Controls.Add(qb);
-                qbX += 65;
+                qbX += 63;
             }
 
-            // ═══════════════════════════════════════════
-            // 左側歷史面板
-            // ═══════════════════════════════════════════
+            // ===================== 左側歷史面板 =====================
             pnlLeft = new Panel();
             pnlLeft.Dock = DockStyle.Left;
             pnlLeft.Width = 200;
@@ -207,7 +189,7 @@ namespace AIAgentTool
             pnlLeft.Padding = new Padding(5);
 
             lblHistory = new Label();
-            lblHistory.Text = "📜 任務歷史";
+            lblHistory.Text = "# 任務歷史";
             lblHistory.Dock = DockStyle.Top;
             lblHistory.Height = 25;
             lblHistory.ForeColor = Color.FromArgb(180, 180, 190);
@@ -224,9 +206,7 @@ namespace AIAgentTool
             pnlLeft.Controls.Add(lstHistory);
             pnlLeft.Controls.Add(lblHistory);
 
-            // ═══════════════════════════════════════════
-            // 狀態列
-            // ═══════════════════════════════════════════
+            // ===================== 狀態列 =====================
             statusBar = new StatusStrip();
             statusBar.BackColor = Color.FromArgb(35, 35, 42);
             statusBar.ForeColor = Color.FromArgb(180, 180, 190);
@@ -248,17 +228,14 @@ namespace AIAgentTool
             statusBar.Items.Add(progressBar);
             statusBar.Items.Add(lblQueue);
 
-            // ═══════════════════════════════════════════
-            // 主分頁控件
-            // ═══════════════════════════════════════════
+            // ===================== 主分頁控件 =====================
             tabMain = new TabControl();
             tabMain.Dock = DockStyle.Fill;
             tabMain.BackColor = Color.FromArgb(35, 35, 40);
             tabMain.ForeColor = Color.FromArgb(220, 220, 220);
             tabMain.Font = new Font("Microsoft JhengHei UI", 9F);
 
-            // — 結果分頁 —
-            tabResult = new TabPage("📄 結果");
+            tabResult = new TabPage("結果");
             tabResult.BackColor = Color.FromArgb(30, 30, 35);
 
             rtbResult = new RichTextBox();
@@ -270,14 +247,13 @@ namespace AIAgentTool
             rtbResult.BorderStyle = BorderStyle.None;
             rtbResult.WordWrap = true;
 
-            // 結果頁底部按鈕
             Panel pnlResultButtons = new Panel();
             pnlResultButtons.Dock = DockStyle.Bottom;
             pnlResultButtons.Height = 35;
             pnlResultButtons.BackColor = Color.FromArgb(35, 35, 42);
 
             btnCopyResult = new Button();
-            btnCopyResult.Text = "📋 複製";
+            btnCopyResult.Text = "複製";
             btnCopyResult.Location = new Point(5, 5);
             btnCopyResult.Size = new Size(75, 26);
             btnCopyResult.FlatStyle = FlatStyle.Flat;
@@ -287,7 +263,7 @@ namespace AIAgentTool
             btnCopyResult.Cursor = Cursors.Hand;
 
             btnExport = new Button();
-            btnExport.Text = "💾 匯出";
+            btnExport.Text = "匯出";
             btnExport.Location = new Point(85, 5);
             btnExport.Size = new Size(75, 26);
             btnExport.FlatStyle = FlatStyle.Flat;
@@ -302,8 +278,7 @@ namespace AIAgentTool
             tabResult.Controls.Add(rtbResult);
             tabResult.Controls.Add(pnlResultButtons);
 
-            // — 搜尋結果分頁 —
-            tabSearchResults = new TabPage("🔍 搜尋結果");
+            tabSearchResults = new TabPage("搜尋結果");
             tabSearchResults.BackColor = Color.FromArgb(30, 30, 35);
 
             dgvSearchResults = new DataGridView();
@@ -338,8 +313,7 @@ namespace AIAgentTool
 
             tabSearchResults.Controls.Add(dgvSearchResults);
 
-            // — 步驟分頁 —
-            tabSteps = new TabPage("📋 執行步驟");
+            tabSteps = new TabPage("執行步驟");
             tabSteps.BackColor = Color.FromArgb(30, 30, 35);
 
             rtbSteps = new RichTextBox();
@@ -353,8 +327,7 @@ namespace AIAgentTool
 
             tabSteps.Controls.Add(rtbSteps);
 
-            // — 程式碼分頁 —
-            tabCode = new TabPage("💻 程式碼");
+            tabCode = new TabPage("程式碼");
             tabCode.BackColor = Color.FromArgb(30, 30, 35);
 
             rtbCode = new RichTextBox();
@@ -366,14 +339,13 @@ namespace AIAgentTool
             rtbCode.WordWrap = false;
             rtbCode.AcceptsTab = true;
 
-            // 程式碼頁底部按鈕
             Panel pnlCodeButtons = new Panel();
             pnlCodeButtons.Dock = DockStyle.Bottom;
             pnlCodeButtons.Height = 35;
             pnlCodeButtons.BackColor = Color.FromArgb(35, 35, 42);
 
             btnRunCode = new Button();
-            btnRunCode.Text = "▶ 編譯執行";
+            btnRunCode.Text = "> 編譯執行";
             btnRunCode.Location = new Point(5, 5);
             btnRunCode.Size = new Size(90, 26);
             btnRunCode.FlatStyle = FlatStyle.Flat;
@@ -383,7 +355,7 @@ namespace AIAgentTool
             btnRunCode.Cursor = Cursors.Hand;
 
             btnSaveCode = new Button();
-            btnSaveCode.Text = "💾 儲存";
+            btnSaveCode.Text = "儲存";
             btnSaveCode.Location = new Point(100, 5);
             btnSaveCode.Size = new Size(75, 26);
             btnSaveCode.FlatStyle = FlatStyle.Flat;
@@ -398,8 +370,7 @@ namespace AIAgentTool
             tabCode.Controls.Add(rtbCode);
             tabCode.Controls.Add(pnlCodeButtons);
 
-            // — 快取分頁 —
-            tabCache = new TabPage("🗄 知識快取");
+            tabCache = new TabPage("知識快取");
             tabCache.BackColor = Color.FromArgb(30, 30, 35);
 
             dgvCache = new DataGridView();
@@ -430,16 +401,13 @@ namespace AIAgentTool
 
             tabCache.Controls.Add(dgvCache);
 
-            // 加入分頁
             tabMain.TabPages.Add(tabResult);
             tabMain.TabPages.Add(tabSearchResults);
             tabMain.TabPages.Add(tabSteps);
             tabMain.TabPages.Add(tabCode);
             tabMain.TabPages.Add(tabCache);
 
-            // ═══════════════════════════════════════════
-            // 系統托盤
-            // ═══════════════════════════════════════════
+            // ===================== 系統托盤 =====================
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add("顯示主視窗", null, TrayMenu_Show);
             trayMenu.Items.Add("-");
@@ -451,16 +419,13 @@ namespace AIAgentTool
             trayIcon.Visible = false;
             trayIcon.DoubleClick += TrayIcon_DoubleClick;
 
-            // 使用內建圖示（避免外部檔案依賴）
             try
             {
                 trayIcon.Icon = System.Drawing.SystemIcons.Application;
             }
             catch { }
 
-            // ═══════════════════════════════════════════
-            // 加入主窗體
-            // ═══════════════════════════════════════════
+            // ===================== 加入主窗體 =====================
             this.Controls.Add(tabMain);
             this.Controls.Add(pnlLeft);
             this.Controls.Add(statusBar);
