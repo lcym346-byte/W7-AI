@@ -155,7 +155,7 @@ namespace AIAgentTool.Services.Search
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("DDG Instant error: " + ex.Message);
+                Debug.WriteLine("DDG Instant error: " + ex.Message);
             }
 
             return results;
@@ -238,7 +238,7 @@ namespace AIAgentTool.Services.Search
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("DDG HTML error: " + ex.Message);
+                Debug.WriteLine("DDG HTML error: " + ex.Message);
             }
 
             return results;
@@ -273,7 +273,7 @@ namespace AIAgentTool.Services.Search
             }
             catch (WebException wex)
             {
-                System.Diagnostics.Debug.WriteLine("HttpGet WebException: " + wex.Message);
+                Debug.WriteLine("HttpGet WebException: " + wex.Message);
                 // 嘗試讀取錯誤回應
                 if (wex.Response != null)
                 {
@@ -282,7 +282,7 @@ namespace AIAgentTool.Services.Search
                         using (Stream s = wex.Response.GetResponseStream())
                         using (StreamReader sr = new StreamReader(s))
                         {
-                            System.Diagnostics.Debug.WriteLine("Error body: " + sr.ReadToEnd());
+                            Debug.WriteLine("Error body: " + sr.ReadToEnd());
                         }
                     }
                     catch { }
@@ -291,7 +291,7 @@ namespace AIAgentTool.Services.Search
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("HttpGet error: " + ex.Message);
+                Debug.WriteLine("HttpGet error: " + ex.Message);
                 return null;
             }
         }
