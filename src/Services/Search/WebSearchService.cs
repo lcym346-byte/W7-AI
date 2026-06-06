@@ -9,14 +9,8 @@ using System.Threading;
 using AIAgentTool.Models;
 using AIAgentTool.Utils;
 
-
 namespace AIAgentTool.Services.Search
 {
-    /// <summary>
-    /// 多引擎網路搜尋服務
-    /// 使用 DuckDuckGo (Instant Answer API + HTML 搜尋)
-    /// 完全免費，不需 API Key
-    /// </summary>
     public class WebSearchService
     {
         private const string DDG_INSTANT_URL =
@@ -31,14 +25,10 @@ namespace AIAgentTool.Services.Search
             _userAgent = "Mozilla/5.0 (Windows NT 6.1; rv:109.0) Gecko/20100101 Firefox/115.0";
         }
 
-        /// <summary>
-        /// 執行多源搜尋（DuckDuckGo Instant + HTML）
-        /// </summary>
         public List<SearchResult> SearchAll(string query)
         {
             List<SearchResult> allResults = new List<SearchResult>();
 
-            // 並行搜尋 (用 Thread)
             List<SearchResult> instantResults = null;
             List<SearchResult> htmlResults = null;
             Exception instantError = null;
@@ -58,7 +48,7 @@ namespace AIAgentTool.Services.Search
 
             t1.Start();
             t2.Start();
-            t1.Join(15000); // 最多等 15 秒
+            t1.Join(15000);
             t2.Join(15000);
 
             if (instantResults != null) allResults.AddRange(instantResults);
@@ -67,10 +57,6 @@ namespace AIAgentTool.Services.Search
             return allResults;
         }
 
-        /// <summary>
-        /// DuckDuckGo Instant Answer API
-        /// 回傳摘要、定義、相關主題
-        /// </summary>
         public List<SearchResult> SearchDuckDuckGoInstant(string query)
         {
             List<SearchResult> results = new List<SearchResult>();
@@ -80,7 +66,6 @@ namespace AIAgentTool.Services.Search
                 string url = string.Format(DDG_INSTANT_URL, Uri.EscapeDataString(query));
                 string json = HttpGet(url);
 
-                // 摘要
                 string abstractText = HtmlHelper.ExtractJsonValue(json, "AbstractText");
                 string abstractSource = HtmlHelper.ExtractJsonValue(json, "AbstractSource");
                 string abstractUrl = HtmlHelper.ExtractJsonValue(json, "AbstractURL");
@@ -98,7 +83,6 @@ namespace AIAgentTool.Services.Search
                     });
                 }
 
-                // 直接答案
                 string answer = HtmlHelper.ExtractJsonValue(json, "Answer");
                 if (!string.IsNullOrEmpty(answer))
                 {
@@ -112,7 +96,6 @@ namespace AIAgentTool.Services.Search
                     });
                 }
 
-                // 定義
                 string definition = HtmlHelper.ExtractJsonValue(json, "Definition");
                 if (!string.IsNullOrEmpty(definition))
                 {
@@ -126,7 +109,6 @@ namespace AIAgentTool.Services.Search
                     });
                 }
 
-                // 相關主題
                 List<string> relatedObjects =
                     HtmlHelper.ExtractJsonArrayObjects(json, "RelatedTopics");
                 foreach (string obj in relatedObjects)
@@ -149,16 +131,12 @@ namespace AIAgentTool.Services.Search
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    "DuckDuckGo Instant 搜尋失敗: " + ex.Message);
+                Debug.WriteLine("DuckDuckGo Instant 搜尋失敗: " + ex.Message);
             }
 
             return results;
         }
 
-        /// <summary>
-        /// DuckDuckGo HTML 搜尋 (抓取搜尋結果頁面)
-        /// </summary>
         public List<SearchResult> SearchDuckDuckGoHtml(string query)
         {
             List<SearchResult> results = new List<SearchResult>();
@@ -168,7 +146,6 @@ namespace AIAgentTool.Services.Search
                 string url = string.Format(DDG_HTML_URL, Uri.EscapeDataString(query));
                 string html = HttpGet(url);
 
-                // 解析搜尋結果 — 方式 1
                 MatchCollection matches = Regex.Matches(html,
                     @"<a[^>]+class=""result__a""[^>]*href=""([^""]+)""[^>]*>([\s\S]*?)</a>" +
                     @"[\s\S]*?class=""result__snippet""[^>]*>([\s\S]*?)</",
@@ -180,7 +157,6 @@ namespace AIAgentTool.Services.Search
                     string title = HtmlHelper.StripHtml(m.Groups[2].Value);
                     string snippet = HtmlHelper.StripHtml(m.Groups[3].Value);
 
-                    // 解碼 DuckDuckGo 的重導向 URL
                     resultUrl = DecodeDdgUrl(resultUrl);
 
                     if (!string.IsNullOrEmpty(title) && title.Length > 2)
@@ -197,7 +173,6 @@ namespace AIAgentTool.Services.Search
                     if (results.Count >= 10) break;
                 }
 
-                // 備用解析方式 (如果方式 1 沒結果)
                 if (results.Count == 0)
                 {
                     matches = Regex.Matches(html,
@@ -227,16 +202,12 @@ namespace AIAgentTool.Services.Search
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    "DuckDuckGo HTML 搜尋失敗: " + ex.Message);
+                Debug.WriteLine("DuckDuckGo HTML 搜尋失敗: " + ex.Message);
             }
 
             return results;
         }
 
-        /// <summary>
-        /// HTTP GET 請求 (.NET 4.0 相容)
-        /// </summary>
         public string HttpGet(string url)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
@@ -257,21 +228,16 @@ namespace AIAgentTool.Services.Search
             }
         }
 
-        /// <summary>
-        /// 解碼 DuckDuckGo 的重導向 URL
-        /// </summary>
         private string DecodeDdgUrl(string url)
         {
             if (string.IsNullOrEmpty(url)) return url;
 
-            // DuckDuckGo 用 uddg= 參數包裝真實 URL
             Match uddgMatch = Regex.Match(url, @"uddg=([^&]+)");
             if (uddgMatch.Success)
             {
                 return Uri.UnescapeDataString(uddgMatch.Groups[1].Value);
             }
 
-            // 移除 DuckDuckGo 前綴
             if (url.StartsWith("//duckduckgo.com/l/?"))
             {
                 Match kbbMatch = Regex.Match(url, @"kbb=([^&]+)");
