@@ -8,27 +8,18 @@ using AIAgentTool.Utils;
 
 namespace AIAgentTool.Services.AI
 {
-    /// <summary>
-    /// DuckDuckGo AI Chat 服務
-    /// 完全免費，不需要 API Key
-    /// 利用 DuckDuckGo 的 AI Chat 功能取得 AI 回應
-    /// 
-    /// 注意：這是非官方的使用方式，可能隨時改變
-    /// </summary>
     public class DuckDuckGoAiService
     {
-        // DuckDuckGo AI Chat 端點
         private const string STATUS_URL = "https://duckduckgo.com/duckchat/v1/status";
         private const string CHAT_URL = "https://duckduckgo.com/duckchat/v1/chat";
 
-        // 可用模型
         public const string MODEL_GPT4O_MINI = "gpt-4o-mini";
         public const string MODEL_CLAUDE_HAIKU = "claude-3-haiku-20240307";
         public const string MODEL_LLAMA = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo";
         public const string MODEL_MIXTRAL = "mistralai/Mixtral-8x7B-Instruct-v0.1";
 
         private readonly string _model;
-        private string _vqd; // DuckDuckGo 的會話 token
+        private string _vqd;
 
         public DuckDuckGoAiService(string model)
         {
@@ -38,20 +29,13 @@ namespace AIAgentTool.Services.AI
 
         public DuckDuckGoAiService() : this(MODEL_GPT4O_MINI) { }
 
-        /// <summary>
-        /// 發送訊息給 DuckDuckGo AI Chat
-        /// </summary>
-        /// <param name="prompt">使用者訊息</param>
-        /// <returns>AI 回應文字，失敗回傳 null</returns>
         public string SendMessage(string prompt)
         {
             try
             {
-                // 步驟 1: 取得 VQD token (會話標識)
                 if (!ObtainVqdToken())
                     return null;
 
-                // 步驟 2: 發送聊天請求
                 string requestBody = BuildChatJson(prompt);
 
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(CHAT_URL);
@@ -71,10 +55,8 @@ namespace AIAgentTool.Services.AI
                     requestStream.Write(bodyBytes, 0, bodyBytes.Length);
                 }
 
-                // 步驟 3: 讀取 SSE (Server-Sent Events) 串流回應
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
-                    // 更新 VQD token (用於後續對話)
                     string newVqd = response.Headers["x-vqd-4"];
                     if (!string.IsNullOrEmpty(newVqd))
                         _vqd = newVqd;
@@ -88,15 +70,11 @@ namespace AIAgentTool.Services.AI
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    "DuckDuckGo AI 請求失敗: " + ex.Message);
+                Debug.WriteLine("DuckDuckGo AI 請求失敗: " + ex.Message);
                 return null;
             }
         }
 
-        /// <summary>
-        /// 取得 VQD Token (DuckDuckGo 的會話標識)
-        /// </summary>
         private bool ObtainVqdToken()
         {
             try
@@ -115,15 +93,11 @@ namespace AIAgentTool.Services.AI
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    "取得 VQD Token 失敗: " + ex.Message);
+                Debug.WriteLine("取得 VQD Token 失敗: " + ex.Message);
                 return false;
             }
         }
 
-        /// <summary>
-        /// 建構聊天請求 JSON
-        /// </summary>
         private string BuildChatJson(string prompt)
         {
             string escapedPrompt = prompt
@@ -138,11 +112,6 @@ namespace AIAgentTool.Services.AI
                 _model, escapedPrompt);
         }
 
-        /// <summary>
-        /// 解析 SSE (Server-Sent Events) 串流回應
-        /// 格式: data: {"message":"...","created":...}
-        /// 結束: data: [DONE]
-        /// </summary>
         private string ParseSseResponse(StreamReader reader)
         {
             StringBuilder fullResponse = new StringBuilder();
@@ -153,12 +122,11 @@ namespace AIAgentTool.Services.AI
                 if (!line.StartsWith("data: "))
                     continue;
 
-                string data = line.Substring(6); // 去掉 "data: " 前綴
+                string data = line.Substring(6);
 
                 if (data == "[DONE]")
                     break;
 
-                // 擷取 message 欄位
                 string message = HtmlHelper.ExtractJsonValue(data, "message");
                 if (!string.IsNullOrEmpty(message))
                 {
@@ -170,9 +138,6 @@ namespace AIAgentTool.Services.AI
             return string.IsNullOrEmpty(result) ? null : result;
         }
 
-        /// <summary>
-        /// 測試連線是否可用
-        /// </summary>
         public bool TestConnection()
         {
             return ObtainVqdToken();
