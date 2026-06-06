@@ -215,6 +215,9 @@ namespace AIAgentTool.Services.Search
             request.UserAgent = _userAgent;
             request.Accept = "text/html,application/json,*/*";
             request.Headers.Add("Accept-Language", "zh-TW,zh;q=0.9,en;q=0.8");
+            request.Headers.Add("Cache-Control", "no-cache");
+            request.Headers.Add("Pragma", "no-cache");
+            request.Referer = "https://duckduckgo.com/";
             request.Timeout = 15000;
             request.ReadWriteTimeout = 15000;
             request.AutomaticDecompression =
