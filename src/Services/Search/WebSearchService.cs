@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -11,39 +10,37 @@ using AIAgentTool.Utils;
 
 namespace AIAgentTool.Services.Search
 {
+    /// <summary>
+    /// 網路搜尋服務 - DuckDuckGo (修正版，加入必要 headers)
+    /// </summary>
     public class WebSearchService
     {
-        private const string DDG_INSTANT_URL =
-            "https://api.duckduckgo.com/?q={0}&format=json&no_redirect=1&no_html=1";
-        private const string DDG_HTML_URL =
-            "https://html.duckduckgo.com/html/?q={0}";
+        private const string DDG_INSTANT_URL = "https://api.duckduckgo.com/?q={0}&format=json&no_redirect=1&no_html=1";
+        private const string DDG_HTML_URL = "https://html.duckduckgo.com/html/?q={0}";
 
-        private readonly string _userAgent;
+        private const string USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36";
 
-        public WebSearchService()
-        {
-            _userAgent = "Mozilla/5.0 (Windows NT 6.1; rv:109.0) Gecko/20100101 Firefox/115.0";
-        }
-
+        /// <summary>
+        /// 同時搜尋多個來源，合併結果
+        /// </summary>
         public List<SearchResult> SearchAll(string query)
         {
             List<SearchResult> allResults = new List<SearchResult>();
-
             List<SearchResult> instantResults = null;
             List<SearchResult> htmlResults = null;
-            Exception instantError = null;
-            Exception htmlError = null;
+            Exception instantEx = null;
+            Exception htmlEx = null;
 
             Thread t1 = new Thread(delegate()
             {
                 try { instantResults = SearchDuckDuckGoInstant(query); }
-                catch (Exception ex) { instantError = ex; }
+                catch (Exception ex) { instantEx = ex; }
             });
 
             Thread t2 = new Thread(delegate()
             {
                 try { htmlResults = SearchDuckDuckGoHtml(query); }
-                catch (Exception ex) { htmlError = ex; }
+                catch (Exception ex) { htmlEx = ex; }
             });
 
             t1.Start();
@@ -54,9 +51,29 @@ namespace AIAgentTool.Services.Search
             if (instantResults != null) allResults.AddRange(instantResults);
             if (htmlResults != null) allResults.AddRange(htmlResults);
 
-            return allResults;
+            // 去重：相同 URL 只保留分數最高的
+            Dictionary<string, SearchResult> unique = new Dictionary<string, SearchResult>();
+            foreach (SearchResult r in allResults)
+            {
+                string key = (r.Url ?? r.Title ?? "").ToLower();
+                if (string.IsNullOrEmpty(key)) continue;
+                if (!unique.ContainsKey(key) || unique[key].RelevanceScore < r.RelevanceScore)
+                    unique[key] = r;
+            }
+
+            List<SearchResult> final = new List<SearchResult>(unique.Values);
+            final.Sort(delegate(SearchResult a, SearchResult b)
+            {
+                return b.RelevanceScore.CompareTo(a.RelevanceScore);
+            });
+
+            if (final.Count > 10) final.RemoveRange(10, final.Count - 10);
+            return final;
         }
 
+        /// <summary>
+        /// DuckDuckGo Instant Answer API
+        /// </summary>
         public List<SearchResult> SearchDuckDuckGoInstant(string query)
         {
             List<SearchResult> results = new List<SearchResult>();
@@ -65,78 +82,87 @@ namespace AIAgentTool.Services.Search
             {
                 string url = string.Format(DDG_INSTANT_URL, Uri.EscapeDataString(query));
                 string json = HttpGet(url);
+                if (string.IsNullOrEmpty(json)) return results;
 
+                // Abstract
                 string abstractText = HtmlHelper.ExtractJsonValue(json, "AbstractText");
                 string abstractSource = HtmlHelper.ExtractJsonValue(json, "AbstractSource");
                 string abstractUrl = HtmlHelper.ExtractJsonValue(json, "AbstractURL");
-                string heading = HtmlHelper.ExtractJsonValue(json, "Heading");
 
                 if (!string.IsNullOrEmpty(abstractText) && abstractText.Length > 10)
                 {
                     results.Add(new SearchResult
                     {
-                        Title = heading,
+                        Title = HtmlHelper.ExtractJsonValue(json, "Heading"),
                         Snippet = abstractText,
                         Url = abstractUrl,
-                        Source = "DuckDuckGo/" + abstractSource,
+                        Source = abstractSource,
                         RelevanceScore = 0.9
                     });
                 }
 
+                // Direct Answer
                 string answer = HtmlHelper.ExtractJsonValue(json, "Answer");
-                if (!string.IsNullOrEmpty(answer))
+                if (!string.IsNullOrEmpty(answer) && answer.Length > 2)
                 {
                     results.Add(new SearchResult
                     {
-                        Title = "直接答案: " + heading,
-                        Snippet = HtmlHelper.StripHtml(answer),
+                        Title = query + " - Direct Answer",
+                        Snippet = answer,
                         Url = "",
-                        Source = "DuckDuckGo/Instant",
+                        Source = "DuckDuckGo Instant",
                         RelevanceScore = 1.0
                     });
                 }
 
+                // Definition
                 string definition = HtmlHelper.ExtractJsonValue(json, "Definition");
-                if (!string.IsNullOrEmpty(definition))
+                string definitionUrl = HtmlHelper.ExtractJsonValue(json, "DefinitionURL");
+                if (!string.IsNullOrEmpty(definition) && definition.Length > 5)
                 {
                     results.Add(new SearchResult
                     {
-                        Title = "定義: " + heading,
+                        Title = query + " - Definition",
                         Snippet = definition,
-                        Url = HtmlHelper.ExtractJsonValue(json, "DefinitionURL"),
-                        Source = "DuckDuckGo/Definition",
+                        Url = definitionUrl,
+                        Source = "DuckDuckGo Definition",
                         RelevanceScore = 0.85
                     });
                 }
 
-                List<string> relatedObjects =
-                    HtmlHelper.ExtractJsonArrayObjects(json, "RelatedTopics");
-                foreach (string obj in relatedObjects)
+                // Related Topics
+                List<string> topics = HtmlHelper.ExtractJsonArrayObjects(json, "RelatedTopics");
+                int count = 0;
+                foreach (string topic in topics)
                 {
-                    string text = HtmlHelper.ExtractJsonValue(obj, "Text");
-                    string firstUrl = HtmlHelper.ExtractJsonValue(obj, "FirstURL");
+                    if (count >= 5) break;
+                    string text = HtmlHelper.ExtractJsonValue(topic, "Text");
+                    string firstUrl = HtmlHelper.ExtractJsonValue(topic, "FirstURL");
                     if (!string.IsNullOrEmpty(text) && text.Length > 10)
                     {
                         results.Add(new SearchResult
                         {
-                            Title = HtmlHelper.TruncateText(text, 60),
+                            Title = text.Length > 80 ? text.Substring(0, 80) : text,
                             Snippet = text,
                             Url = firstUrl,
-                            Source = "DuckDuckGo/Related",
+                            Source = "DuckDuckGo Related",
                             RelevanceScore = 0.6
                         });
+                        count++;
                     }
-                    if (results.Count >= 10) break;
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("DuckDuckGo Instant 搜尋失敗: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("DDG Instant error: " + ex.Message);
             }
 
             return results;
         }
 
+        /// <summary>
+        /// DuckDuckGo HTML 搜尋（解析搜尋結果頁面）
+        /// </summary>
         public List<SearchResult> SearchDuckDuckGoHtml(string query)
         {
             List<SearchResult> results = new List<SearchResult>();
@@ -145,18 +171,26 @@ namespace AIAgentTool.Services.Search
             {
                 string url = string.Format(DDG_HTML_URL, Uri.EscapeDataString(query));
                 string html = HttpGet(url);
+                if (string.IsNullOrEmpty(html)) return results;
 
+                // 解析搜尋結果
                 MatchCollection matches = Regex.Matches(html,
-                    @"<a[^>]+class=""result__a""[^>]*href=""([^""]+)""[^>]*>([\s\S]*?)</a>" +
-                    @"[\s\S]*?class=""result__snippet""[^>]*>([\s\S]*?)</",
+                    @"<a[^>]+class=""result__a""[^>]+href=""([^""]+)""[^>]*>([\s\S]*?)</a>",
                     RegexOptions.IgnoreCase);
 
-                foreach (Match m in matches)
-                {
-                    string resultUrl = WebUtility.HtmlDecode(m.Groups[1].Value);
-                    string title = HtmlHelper.StripHtml(m.Groups[2].Value);
-                    string snippet = HtmlHelper.StripHtml(m.Groups[3].Value);
+                MatchCollection snippets = Regex.Matches(html,
+                    @"<a[^>]+class=""result__snippet""[^>]*>([\s\S]*?)</a>",
+                    RegexOptions.IgnoreCase);
 
+                for (int i = 0; i < matches.Count && i < 10; i++)
+                {
+                    string resultUrl = matches[i].Groups[1].Value;
+                    string title = HtmlHelper.StripHtml(matches[i].Groups[2].Value);
+                    string snippet = i < snippets.Count
+                        ? HtmlHelper.StripHtml(snippets[i].Groups[1].Value)
+                        : "";
+
+                    // 解碼 DuckDuckGo 重導向 URL
                     resultUrl = DecodeDdgUrl(resultUrl);
 
                     if (!string.IsNullOrEmpty(title) && title.Length > 2)
@@ -166,83 +200,133 @@ namespace AIAgentTool.Services.Search
                             Title = title,
                             Snippet = snippet,
                             Url = resultUrl,
-                            Source = "DuckDuckGo/Web",
+                            Source = "DuckDuckGo",
                             RelevanceScore = 0.7
                         });
                     }
-                    if (results.Count >= 10) break;
                 }
 
+                // 如果正規解析沒結果，嘗試備用模式
                 if (results.Count == 0)
                 {
-                    matches = Regex.Matches(html,
-                        @"class=""result__title""[^>]*>[\s\S]*?<a[^>]*href=""([^""]+)""[^>]*>([\s\S]*?)</a>",
+                    MatchCollection links = Regex.Matches(html,
+                        @"<a[^>]+href=""(https?://[^""]+)""[^>]*>([^<]+)</a>",
                         RegexOptions.IgnoreCase);
 
-                    foreach (Match m in matches)
+                    int count = 0;
+                    foreach (Match m in links)
                     {
-                        string resultUrl = DecodeDdgUrl(
-                            WebUtility.HtmlDecode(m.Groups[1].Value));
-                        string title = HtmlHelper.StripHtml(m.Groups[2].Value);
+                        if (count >= 10) break;
+                        string linkUrl = m.Groups[1].Value;
+                        string linkText = m.Groups[2].Value.Trim();
 
-                        if (!string.IsNullOrEmpty(title) && title.Length > 2)
+                        if (linkUrl.Contains("duckduckgo.com")) continue;
+                        if (linkText.Length < 5) continue;
+
+                        results.Add(new SearchResult
                         {
-                            results.Add(new SearchResult
-                            {
-                                Title = title,
-                                Url = resultUrl,
-                                Snippet = "",
-                                Source = "DuckDuckGo/Web",
-                                RelevanceScore = 0.5
-                            });
-                        }
-                        if (results.Count >= 8) break;
+                            Title = linkText,
+                            Snippet = "",
+                            Url = linkUrl,
+                            Source = "DuckDuckGo (fallback)",
+                            RelevanceScore = 0.5
+                        });
+                        count++;
                     }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("DuckDuckGo HTML 搜尋失敗: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("DDG HTML error: " + ex.Message);
             }
 
             return results;
         }
 
+        /// <summary>
+        /// HTTP GET 請求（修正版，加入所有必要 headers）
+        /// </summary>
         public string HttpGet(string url)
         {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            request.Method = "GET";
-            request.UserAgent = _userAgent;
-            request.Accept = "text/html,application/json,*/*";
-            request.Headers.Add("Accept-Language", "zh-TW,zh;q=0.9,en;q=0.8");
-            request.Timeout = 15000;
-            request.ReadWriteTimeout = 15000;
-            request.AutomaticDecompression =
-                DecompressionMethods.GZip | DecompressionMethods.Deflate;
-
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-            using (Stream stream = response.GetResponseStream())
-            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            try
             {
-                return reader.ReadToEnd();
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                request.Method = "GET";
+                request.UserAgent = USER_AGENT;
+                request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.8,*/*;q=0.7";
+                request.Headers.Add("Accept-Language", "en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7");
+                request.Headers.Add("Accept-Encoding", "gzip, deflate");
+                request.Headers.Add("Cache-Control", "no-cache");
+                request.Headers.Add("Pragma", "no-cache");
+                request.Referer = "https://duckduckgo.com/";
+                request.Timeout = 15000;
+                request.ReadWriteTimeout = 15000;
+                request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                using (Stream stream = response.GetResponseStream())
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+            catch (WebException wex)
+            {
+                System.Diagnostics.Debug.WriteLine("HttpGet WebException: " + wex.Message);
+                // 嘗試讀取錯誤回應
+                if (wex.Response != null)
+                {
+                    try
+                    {
+                        using (Stream s = wex.Response.GetResponseStream())
+                        using (StreamReader sr = new StreamReader(s))
+                        {
+                            System.Diagnostics.Debug.WriteLine("Error body: " + sr.ReadToEnd());
+                        }
+                    }
+                    catch { }
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("HttpGet error: " + ex.Message);
+                return null;
             }
         }
 
+        /// <summary>
+        /// 解碼 DuckDuckGo 重導向 URL
+        /// </summary>
         private string DecodeDdgUrl(string url)
         {
             if (string.IsNullOrEmpty(url)) return url;
 
-            Match uddgMatch = Regex.Match(url, @"uddg=([^&]+)");
-            if (uddgMatch.Success)
+            // 嘗試從 uddg 參數取得真實 URL
+            Match m = Regex.Match(url, @"[?&]uddg=([^&]+)");
+            if (m.Success)
             {
-                return Uri.UnescapeDataString(uddgMatch.Groups[1].Value);
+                try { return Uri.UnescapeDataString(m.Groups[1].Value); }
+                catch { }
             }
 
-            if (url.StartsWith("//duckduckgo.com/l/?"))
+            // 嘗試從 kbb 參數
+            m = Regex.Match(url, @"[?&]kbb=([^&]+)");
+            if (m.Success)
             {
-                Match kbbMatch = Regex.Match(url, @"kbb=([^&]+)");
-                if (kbbMatch.Success)
-                    return Uri.UnescapeDataString(kbbMatch.Groups[1].Value);
+                try { return Uri.UnescapeDataString(m.Groups[1].Value); }
+                catch { }
+            }
+
+            // 如果是 //duckduckgo.com/l/?... 格式
+            if (url.Contains("/l/?"))
+            {
+                m = Regex.Match(url, @"uddg=([^&]+)");
+                if (m.Success)
+                {
+                    try { return Uri.UnescapeDataString(m.Groups[1].Value); }
+                    catch { }
+                }
             }
 
             return url;
