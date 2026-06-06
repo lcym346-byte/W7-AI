@@ -10,18 +10,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
-
 namespace AIAgentTool.Services.System
 {
-    /// <summary>
-    /// 系統自動化服務 — CMD 命令執行、螢幕截圖、剪貼簿操作
-    /// </summary>
     public class SystemAutomationService
     {
-        // ============================================================
-        // CMD 安全控制
-        // ============================================================
-
         private static readonly HashSet<string> AllowedCommands = CreateAllowed();
         private static readonly HashSet<string> BlockedCommands = CreateBlocked();
 
@@ -69,20 +61,11 @@ namespace AIAgentTool.Services.System
             _safetyLevel = settings.Safety;
         }
 
-
-        // ============================================================
-        // CMD 命令執行
-        // ============================================================
-
-        /// <summary>
-        /// 執行安全的 CMD 命令
-        /// </summary>
         public string ExecuteCommand(string command)
         {
             StringBuilder sb = new StringBuilder();
             command = command.Trim();
 
-            // 安全檢查
             string safetyResult = CheckCommandSafety(command);
             if (safetyResult != null)
             {
@@ -103,7 +86,6 @@ namespace AIAgentTool.Services.System
                 startInfo.RedirectStandardError = true;
                 startInfo.CreateNoWindow = true;
 
-                // .NET 4.0 中設定編碼
                 try
                 {
                     startInfo.StandardOutputEncoding = Encoding.GetEncoding(950);
@@ -111,7 +93,6 @@ namespace AIAgentTool.Services.System
                 }
                 catch
                 {
-                    // 如果 Big5 不可用，用 UTF-8
                     startInfo.StandardOutputEncoding = Encoding.UTF8;
                     startInfo.StandardErrorEncoding = Encoding.UTF8;
                 }
@@ -145,9 +126,6 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 快速命令別名
-        /// </summary>
         public string QuickCommand(string alias)
         {
             alias = alias.Trim().ToLower();
@@ -181,7 +159,6 @@ namespace AIAgentTool.Services.System
             if (commandMap.ContainsKey(alias))
                 return ExecuteCommand(commandMap[alias]);
 
-            // 回傳可用命令列表
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(string.Format("未知的快速命令: {0}\n", alias));
             sb.AppendLine("可用的快速命令:");
@@ -192,13 +169,6 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        // ============================================================
-        // 螢幕截圖
-        // ============================================================
-
-        /// <summary>
-        /// 截取全螢幕
-        /// </summary>
         public string CaptureScreen(string savePath)
         {
             try
@@ -231,22 +201,11 @@ namespace AIAgentTool.Services.System
             }
         }
 
-        /// <summary>
-        /// 截取全螢幕（無參數版本）— 供 TaskAutomationService 呼叫
-        /// </summary>
         public string CaptureScreen()
         {
             return CaptureScreen(null);
         }
 
-
-        // ============================================================
-        // 剪貼簿操作
-        // ============================================================
-
-        /// <summary>
-        /// 取得剪貼簿文字
-        /// </summary>
         public string GetClipboardText()
         {
             try
@@ -262,8 +221,7 @@ namespace AIAgentTool.Services.System
                             text = "[剪貼簿包含圖片]";
                         else if (Clipboard.ContainsFileDropList())
                         {
-                            System.Collections.Specialized.StringCollection files =
-                                Clipboard.GetFileDropList();
+                            StringCollection files = Clipboard.GetFileDropList();
                             StringBuilder sb2 = new StringBuilder("[剪貼簿包含檔案]\n");
                             foreach (string f in files)
                                 sb2.AppendLine("  " + f);
@@ -289,9 +247,6 @@ namespace AIAgentTool.Services.System
             }
         }
 
-        /// <summary>
-        /// 設定剪貼簿文字
-        /// </summary>
         public string SetClipboardText(string text)
         {
             try
@@ -312,30 +267,16 @@ namespace AIAgentTool.Services.System
             }
         }
 
-        /// <summary>
-        /// GetClipboard — GetClipboardText 的別名
-        /// </summary>
         public string GetClipboard()
         {
             return GetClipboardText();
         }
 
-        /// <summary>
-        /// SetClipboard — SetClipboardText 的別名
-        /// </summary>
         public string SetClipboard(string text)
         {
             return SetClipboardText(text);
         }
 
-
-        // ============================================================
-        // 系統資訊
-        // ============================================================
-
-        /// <summary>
-        /// 取得完整系統資訊
-        /// </summary>
         public string GetSystemInfo()
         {
             StringBuilder sb = new StringBuilder();
@@ -370,10 +311,6 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        // ============================================================
-        // 安全檢查
-        // ============================================================
-
         private string CheckCommandSafety(string command)
         {
             string[] parts = command.Split(new char[] { ' ', '/' },
@@ -382,7 +319,6 @@ namespace AIAgentTool.Services.System
 
             string baseCommand = parts[0].ToLower();
 
-            // 黑名單檢查 (所有等級都禁止)
             if (BlockedCommands.Contains(baseCommand))
             {
                 return string.Format(
@@ -391,7 +327,6 @@ namespace AIAgentTool.Services.System
                     "允許的命令：資訊查詢、網路診斷類", baseCommand);
             }
 
-            // 嚴格模式：只允許白名單
             if (_safetyLevel == Models.SafetyLevel.Strict)
             {
                 if (!AllowedCommands.Contains(baseCommand))
@@ -402,7 +337,6 @@ namespace AIAgentTool.Services.System
                 }
             }
 
-            // 危險管道檢查
             string lowerCmd = command.ToLower();
             if ((lowerCmd.Contains("|") && ContainsAny(lowerCmd, "del", "format", "rd")) ||
                 (lowerCmd.Contains(">") && !lowerCmd.Contains("find")) ||
@@ -411,7 +345,7 @@ namespace AIAgentTool.Services.System
                 return "✗ 安全限制：包含潛在危險的管道/重導向操作";
             }
 
-            return null; // 安全通過
+            return null;
         }
 
         private bool ContainsAny(string text, params string[] keywords)
