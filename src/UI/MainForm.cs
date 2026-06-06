@@ -75,23 +75,23 @@ namespace AIAgentTool
         private void ShowWelcome()
         {
             rtbResult.Clear();
-            AppendColoredText(rtbResult, "═══════════════════════════════════════\n", Color.FromArgb(100, 180, 255));
-            AppendColoredText(rtbResult, "   🤖 AI 智慧代理工具 v1.0\n", Color.FromArgb(100, 255, 150));
+            AppendColoredText(rtbResult, "=======================================\n", Color.FromArgb(100, 180, 255));
+            AppendColoredText(rtbResult, "   [AI] 智慧代理工具 v1.0\n", Color.FromArgb(100, 255, 150));
             AppendColoredText(rtbResult, "   適用於 Windows 7（含無 SP1）\n", Color.Gray);
-            AppendColoredText(rtbResult, "═══════════════════════════════════════\n\n", Color.FromArgb(100, 180, 255));
+            AppendColoredText(rtbResult, "=======================================\n\n", Color.FromArgb(100, 180, 255));
 
             AppendColoredText(rtbResult, "【功能列表】\n", Color.FromArgb(255, 200, 100));
-            AppendColoredText(rtbResult, "  🔍 網路搜尋（DuckDuckGo + Wikipedia）\n", Color.White);
-            AppendColoredText(rtbResult, "  📚 自動研究（多源搜尋 + AI 分析）\n", Color.White);
-            AppendColoredText(rtbResult, "  📝 智慧摘要（網頁/文字摘要）\n", Color.White);
-            AppendColoredText(rtbResult, "  ⚖ 主題比較（自動對比分析）\n", Color.White);
-            AppendColoredText(rtbResult, "  🧮 數學計算（四則運算 + 次方）\n", Color.White);
-            AppendColoredText(rtbResult, "  💻 程式操控（開啟/關閉/列出）\n", Color.White);
-            AppendColoredText(rtbResult, "  📂 檔案管理（瀏覽/搜尋/開啟）\n", Color.White);
-            AppendColoredText(rtbResult, "  🖥 CMD 命令（安全白名單執行）\n", Color.White);
-            AppendColoredText(rtbResult, "  📸 螢幕截圖\n", Color.White);
-            AppendColoredText(rtbResult, "  💾 程式碼生成（AI + 模板 + 即時編譯）\n", Color.White);
-            AppendColoredText(rtbResult, "  📦 批次執行（多指令依序處理）\n", Color.White);
+            AppendColoredText(rtbResult, "  >> 網路搜尋（DuckDuckGo + Wikipedia）\n", Color.White);
+            AppendColoredText(rtbResult, "  >> 自動研究（多源搜尋 + AI 分析）\n", Color.White);
+            AppendColoredText(rtbResult, "  >> 智慧摘要（網頁/文字摘要）\n", Color.White);
+            AppendColoredText(rtbResult, "  >> 主題比較（自動對比分析）\n", Color.White);
+            AppendColoredText(rtbResult, "  >> 數學計算（四則運算 + 次方）\n", Color.White);
+            AppendColoredText(rtbResult, "  >> 程式操控（開啟/關閉/列出）\n", Color.White);
+            AppendColoredText(rtbResult, "  >> 檔案管理（瀏覽/搜尋/開啟）\n", Color.White);
+            AppendColoredText(rtbResult, "  >> CMD 命令（安全白名單執行）\n", Color.White);
+            AppendColoredText(rtbResult, "  >> 螢幕截圖\n", Color.White);
+            AppendColoredText(rtbResult, "  >> 程式碼生成（AI + 模板 + 即時編譯）\n", Color.White);
+            AppendColoredText(rtbResult, "  >> 批次執行（多指令依序處理）\n", Color.White);
             AppendColoredText(rtbResult, "\n", Color.White);
 
             AppendColoredText(rtbResult, "【使用方式】\n", Color.FromArgb(255, 200, 100));
@@ -239,7 +239,7 @@ namespace AIAgentTool
                 _isExecuting = false;
                 SetUIExecuting(false);
                 SetStatus("錯誤：" + error);
-                AppendColoredText(rtbResult, "\n❌ 錯誤：" + error + "\n", Color.FromArgb(255, 100, 100));
+                AppendColoredText(rtbResult, "\n[X] 錯誤：" + error + "\n", Color.FromArgb(255, 100, 100));
             });
         }
 
@@ -251,7 +251,7 @@ namespace AIAgentTool
             // 結果頁
             rtbResult.Clear();
             AppendColoredText(rtbResult,
-                string.Format("═══ {0} ═══\n", task.Type), Color.FromArgb(100, 180, 255));
+                string.Format("=== {0} ===\n", task.Type), Color.FromArgb(100, 180, 255));
             AppendColoredText(rtbResult,
                 string.Format("查詢：{0}\n", task.Query), Color.FromArgb(200, 200, 200));
             AppendColoredText(rtbResult,
@@ -263,7 +263,7 @@ namespace AIAgentTool
             }
             else
             {
-                AppendColoredText(rtbResult, "❌ " + (task.Result ?? "執行失敗"), Color.FromArgb(255, 120, 120));
+                AppendColoredText(rtbResult, "[X] " + (task.Result ?? "執行失敗"), Color.FromArgb(255, 120, 120));
             }
 
             // 搜尋結果表格
@@ -458,8 +458,8 @@ namespace AIAgentTool
 
             if (result.Success)
             {
-         SetStatus("編譯成功，執行中...");
-          string output = _automationService.CodeCompiler.ExecuteCompiled(result.OutputPath, 30000);
+                SetStatus("編譯成功，執行中...");
+                string output = _automationService.CodeCompiler.ExecuteCompiled(result.OutputPath, 30000);
 
                 AppendColoredText(rtbResult, "\n\n【執行輸出】\n" + output, Color.FromArgb(150, 255, 150));
                 SetStatus("執行完成");
@@ -527,7 +527,7 @@ namespace AIAgentTool
             {
                 try
                 {
-                    System.Diagnostics.Process.Start(url);
+                    Process.Start(url);
                 }
                 catch { }
             }
@@ -611,7 +611,7 @@ namespace AIAgentTool
         private void SetUIExecuting(bool executing)
         {
             btnExecute.Enabled = !executing;
-            btnExecute.Text = executing ? "⏳ 執行中..." : "▶ 執行";
+            btnExecute.Text = executing ? "... 執行中" : "> 執行";
             if (!executing) progressBar.Value = 0;
         }
 
