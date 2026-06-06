@@ -1,17 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Diagnostics;
 
 namespace AIAgentTool.Services.System
 {
-    /// <summary>
-    /// 檔案管理服務 — 目錄瀏覽、檔案搜尋
-    /// </summary>
     public class FileManagerService
     {
-        // 中文路徑別名
         private static readonly Dictionary<string, string> PathAliases = CreatePathAliases();
 
         private static Dictionary<string, string> CreatePathAliases()
@@ -33,17 +29,12 @@ namespace AIAgentTool.Services.System
             d["music"] = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
             d["圖片"] = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
             d["pictures"] = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
-            d["影片"] = Environment.GetFolderPath(
-                Environment.SpecialFolder.MyVideos);
-            d["videos"] = Environment.GetFolderPath(
-                Environment.SpecialFolder.MyVideos);
+            d["影片"] = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+            d["videos"] = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
 
             return d;
         }
 
-        /// <summary>
-        /// 瀏覽目錄
-        /// </summary>
         public string BrowseDirectory(string path)
         {
             StringBuilder sb = new StringBuilder();
@@ -65,7 +56,6 @@ namespace AIAgentTool.Services.System
 
                 sb.AppendLine(string.Format("═══ 目錄: {0} ═══\n", path));
 
-                // 子目錄
                 string[] dirs = Directory.GetDirectories(path);
                 if (dirs.Length > 0)
                 {
@@ -90,7 +80,6 @@ namespace AIAgentTool.Services.System
                     sb.AppendLine();
                 }
 
-                // 檔案
                 string[] files = Directory.GetFiles(path);
                 if (files.Length > 0)
                 {
@@ -115,7 +104,6 @@ namespace AIAgentTool.Services.System
                             files.Length - 50));
                 }
 
-                // 統計
                 long totalSize = 0;
                 foreach (string f in files)
                 {
@@ -139,17 +127,10 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 搜尋檔案
-        /// </summary>
-                /// <summary>
-        /// 搜尋檔案（無指定路徑，預設使用者目錄）
-        /// </summary>
         public string SearchFiles(string keyword)
         {
             return SearchFiles(keyword, null);
         }
-
 
         public string SearchFiles(string keyword, string basePath)
         {
@@ -201,18 +182,12 @@ namespace AIAgentTool.Services.System
 
             return sb.ToString();
         }
-        /// <summary>
-        /// OpenInExplorer — OpenFolder 的別名，供 TaskAutomationService 呼叫
-        /// </summary>
+
         public string OpenInExplorer(string path)
         {
             return OpenFolder(path);
         }
 
-
-        /// <summary>
-        /// 開啟資料夾 (在檔案總管中)
-        /// </summary>
         public string OpenFolder(string path)
         {
             try
@@ -231,19 +206,13 @@ namespace AIAgentTool.Services.System
             }
         }
 
-        // ============================================================
-        // 輔助方法
-        // ============================================================
-
         private string ResolvePath(string path)
         {
             path = path.Trim();
 
-            // 中文別名
             if (PathAliases.ContainsKey(path))
                 return PathAliases[path];
 
-            // 環境變數展開
             path = Environment.ExpandEnvironmentVariables(path);
 
             return path;
