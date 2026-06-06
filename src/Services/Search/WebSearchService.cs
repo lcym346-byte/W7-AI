@@ -208,28 +208,36 @@ namespace AIAgentTool.Services.Search
             return results;
         }
 
-        public string HttpGet(string url)
+                public string HttpGet(string url)
         {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            request.Method = "GET";
-            request.UserAgent = _userAgent;
-            request.Accept = "text/html,application/json,*/*";
-            request.Headers.Add("Accept-Language", "zh-TW,zh;q=0.9,en;q=0.8");
-            request.Headers.Add("Cache-Control", "no-cache");
-            request.Headers.Add("Pragma", "no-cache");
-            request.Referer = "https://duckduckgo.com/";
-            request.Timeout = 15000;
-            request.ReadWriteTimeout = 15000;
-            request.AutomaticDecompression =
-                DecompressionMethods.GZip | DecompressionMethods.Deflate;
-
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-            using (Stream stream = response.GetResponseStream())
-            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            try
             {
-                return reader.ReadToEnd();
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                request.Method = "GET";
+                request.UserAgent = _userAgent;
+                request.Accept = "text/html,application/json,*/*";
+                request.Headers.Add("Accept-Language", "zh-TW,zh;q=0.9,en;q=0.8");
+                request.Headers.Add("Cache-Control", "no-cache");
+                request.Headers.Add("Pragma", "no-cache");
+                request.Referer = "https://duckduckgo.com/";
+                request.Timeout = 15000;
+                request.ReadWriteTimeout = 15000;
+                request.AutomaticDecompression =
+                    DecompressionMethods.GZip | DecompressionMethods.Deflate;
+
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                using (Stream stream = response.GetResponseStream())
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+            catch
+            {
+                return null;
             }
         }
+
 
         private string DecodeDdgUrl(string url)
         {
