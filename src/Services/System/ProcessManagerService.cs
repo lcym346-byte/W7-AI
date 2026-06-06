@@ -8,19 +8,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32;
 
-
 namespace AIAgentTool.Services.System
 {
-    /// <summary>
-    /// 程序管理服務 — 啟動/關閉/列舉程序 + 視窗管理
-    /// Windows 7 相容 (P/Invoke + .NET 4.0)
-    /// </summary>
     public class ProcessManagerService
     {
-        // ============================================================
-        // Win32 API P/Invoke
-        // ============================================================
-
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
@@ -53,10 +44,6 @@ namespace AIAgentTool.Services.System
         private const int SW_MAXIMIZE = 3;
         private const int SW_RESTORE = 9;
 
-        // ============================================================
-        // 程式中文別名對照表
-        // ============================================================
-
         private static readonly Dictionary<string, string> AppAliases =
             CreateAliases();
 
@@ -65,7 +52,6 @@ namespace AIAgentTool.Services.System
             Dictionary<string, string> d = new Dictionary<string, string>(
                 StringComparer.OrdinalIgnoreCase);
 
-            // 系統工具
             d["記事本"] = "notepad.exe";
             d["notepad"] = "notepad.exe";
             d["計算機"] = "calc.exe";
@@ -93,42 +79,28 @@ namespace AIAgentTool.Services.System
             d["登錄編輯程式"] = "regedit.exe";
             d["regedit"] = "regedit.exe";
 
-            // 瀏覽器
             d["chrome"] = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
             d["google"] = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
             d["firefox"] = @"C:\Program Files\Mozilla Firefox\firefox.exe";
             d["ie"] = "iexplore.exe";
             d["edge"] = "msedge.exe";
 
-            // Office
             d["word"] = "WINWORD.EXE";
             d["excel"] = "EXCEL.EXE";
             d["powerpoint"] = "POWERPNT.EXE";
             d["ppt"] = "POWERPNT.EXE";
             d["outlook"] = "OUTLOOK.EXE";
 
-            // 多媒體
             d["媒體播放器"] = "wmplayer.exe";
             d["wmplayer"] = "wmplayer.exe";
 
             return d;
         }
 
-        // ============================================================
-        // 啟動程式
-        // ============================================================
-
-        /// <summary>
-        /// 智慧啟動程式 — 支援中文別名、路徑、URL
-        /// </summary>
-                /// <summary>
-        /// 啟動程式（無參數版本）
-        /// </summary>
         public string LaunchApplication(string appName)
         {
             return LaunchApplication(appName, null);
         }
-
 
         public string LaunchApplication(string appName, string arguments)
         {
@@ -169,7 +141,7 @@ namespace AIAgentTool.Services.System
                     sb.AppendLine("✓ 已使用系統 Shell 啟動");
                 }
             }
-            catch (System.ComponentModel.Win32Exception ex)
+            catch (Win32Exception ex)
             {
                 sb.AppendLine(string.Format("✗ 啟動失敗: {0}", ex.Message));
                 sb.AppendLine(SuggestAlternatives(appName));
@@ -182,9 +154,6 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 開啟檔案 (用預設程式)
-        /// </summary>
         public string OpenFile(string filePath)
         {
             StringBuilder sb = new StringBuilder();
@@ -212,9 +181,6 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 開啟網址
-        /// </summary>
         public string OpenUrl(string url)
         {
             try
@@ -235,13 +201,6 @@ namespace AIAgentTool.Services.System
             }
         }
 
-        // ============================================================
-        // 關閉程式
-        // ============================================================
-
-        /// <summary>
-        /// 關閉程式 (優先正常關閉，逾時才強制終止)
-        /// </summary>
         public string CloseApplication(string appName)
         {
             StringBuilder sb = new StringBuilder();
@@ -259,7 +218,6 @@ namespace AIAgentTool.Services.System
             {
                 Process[] processes = Process.GetProcessesByName(processName);
 
-                // 模糊搜尋
                 if (processes.Length == 0)
                 {
                     List<Process> found = new List<Process>();
@@ -331,21 +289,10 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        // ============================================================
-        // 列舉程序
-        // ============================================================
-
-        /// <summary>
-        /// 列出所有執行中程序
-        /// </summary>
-                /// <summary>
-        /// 列出程序（預設不顯示詳細）
-        /// </summary>
         public string ListRunningProcesses()
         {
             return ListRunningProcesses(false);
         }
-
 
         public string ListRunningProcesses(bool detailed)
         {
@@ -356,7 +303,6 @@ namespace AIAgentTool.Services.System
 
             Process[] allProcesses = Process.GetProcesses();
 
-            // 有視窗的程序
             List<Process> windowProcs = new List<Process>();
             foreach (Process p in allProcesses)
             {
@@ -418,9 +364,6 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 搜尋特定程序
-        /// </summary>
         public string FindProcess(string keyword)
         {
             StringBuilder sb = new StringBuilder();
@@ -465,13 +408,6 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        // ============================================================
-        // 視窗管理
-        // ============================================================
-
-        /// <summary>
-        /// 視窗操作
-        /// </summary>
         public string ManageWindow(string processName, string action)
         {
             StringBuilder sb = new StringBuilder();
@@ -533,9 +469,6 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 列出所有可見視窗
-        /// </summary>
         public string ListAllWindows()
         {
             StringBuilder sb = new StringBuilder();
@@ -569,17 +502,10 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 列出已安裝程式
-        /// </summary>
-                /// <summary>
-        /// 列出已安裝程式（無篩選）
-        /// </summary>
         public string ListInstalledPrograms()
         {
             return ListInstalledPrograms(null);
         }
-
 
         public string ListInstalledPrograms(string filter)
         {
@@ -611,12 +537,10 @@ namespace AIAgentTool.Services.System
                             string name = nameObj.ToString();
                             if (string.IsNullOrEmpty(name)) continue;
 
-                            // 篩選
                             if (!string.IsNullOrEmpty(filter) &&
                                 !name.ToLower().Contains(filter.ToLower()))
                                 continue;
 
-                            // 避免重複
                             if (programs.Contains(name)) continue;
 
                             string version = "";
@@ -624,7 +548,6 @@ namespace AIAgentTool.Services.System
                             if (verObj != null) version = verObj.ToString();
 
                             programs.Add(name);
-                            // 不在這裡格式化，只收集名稱
                         }
                         catch { }
                     }
@@ -648,25 +571,17 @@ namespace AIAgentTool.Services.System
             return sb.ToString();
         }
 
-        // ============================================================
-        // 輔助方法
-        // ============================================================
-
         private string ResolveAppPath(string appName)
         {
-            // 別名
             if (AppAliases.ContainsKey(appName))
                 return AppAliases[appName];
 
-            // 完整路徑
             if (File.Exists(appName))
                 return appName;
 
-            // 補 .exe
             string withExe = appName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
                 ? appName : appName + ".exe";
 
-            // 在 PATH 中搜尋
             string pathVar = Environment.GetEnvironmentVariable("PATH") ?? "";
             foreach (string dir in pathVar.Split(';'))
             {
