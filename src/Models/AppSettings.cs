@@ -117,6 +117,7 @@ namespace AIAgentTool.Models
                 settings.MistralApiKey = ExtractJsonStringValue(json, "MistralApiKey");
                 settings.OpenRouterApiKey = ExtractJsonStringValue(json, "OpenRouterApiKey");
                 settings.DefaultSavePath = ExtractJsonStringValue(json, "DefaultSavePath");
+                settings.AgnesApiKey = ExtractJsonStringValue(json, "AgnesApiKey");
 
                 string aiSource = ExtractJsonStringValue(json, "AiSource");
                 if (!string.IsNullOrEmpty(aiSource))
