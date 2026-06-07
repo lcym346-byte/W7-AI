@@ -8,6 +8,7 @@ namespace AIAgentTool.Services.AI
     {
         private readonly GeminiApiService _gemini;
         private readonly DuckDuckGoAiService _ddgAi;
+        private readonly OpenAiCompatibleService[] _freeProviders;
         private readonly AiSourceOption _preferredSource;
 
         private bool _geminiAvailable;
@@ -34,6 +35,29 @@ namespace AIAgentTool.Services.AI
             _geminiFailCount = 0;
             _ddgFailCount = 0;
             LastUsedSource = "None";
+
+            // 初始化免費 OpenAI 相容 providers
+            _freeProviders = new OpenAiCompatibleService[]
+            {
+                // LLM7 - 完全不需要 API Key
+                new OpenAiCompatibleService("LLM7",
+                    "https://api.llm7.io/v1", "", "deepseek-v3-0324"),
+
+                // Groq - 需要免費 Key (https://console.groq.com/keys)
+                new OpenAiCompatibleService("Groq",
+                    "https://api.groq.com/openai/v1",
+                    settings.GroqApiKey, "llama-3.3-70b-versatile"),
+
+                // Mistral - 需要免費 Key (https://console.mistral.ai/api-keys)
+                new OpenAiCompatibleService("Mistral",
+                    "https://api.mistral.ai/v1",
+                    settings.MistralApiKey, "mistral-small-latest"),
+
+                // OpenRouter - 需要免費 Key (https://openrouter.ai/keys)
+                new OpenAiCompatibleService("OpenRouter",
+                    "https://openrouter.ai/api/v1",
+                    settings.OpenRouterApiKey, "meta-llama/llama-3.3-70b-instruct:free"),
+            };
         }
 
         public string SendMessage(string prompt, string systemInstruction)
@@ -53,11 +77,14 @@ namespace AIAgentTool.Services.AI
                     return null;
                 case AiSourceOption.Auto:
                 default:
+                    // Gemini 優先
                     result = TryGemini(prompt, systemInstruction);
+                    // DuckDuckGo 其次
                     if (result == null)
-                    {
                         result = TryDuckDuckGo(prompt);
-                    }
+                    // 免費 providers 最後
+                    if (result == null)
+                        result = TryFreeProviders(prompt, systemInstruction);
                     break;
             }
 
@@ -128,18 +155,46 @@ namespace AIAgentTool.Services.AI
             return null;
         }
 
+        private string TryFreeProviders(string prompt, string systemInstruction)
+        {
+            foreach (var provider in _freeProviders)
+            {
+                // 跳過沒有 Key 的（LLM7 除外，它不需要 Key）
+                if (provider.ProviderName != "LLM7" &&
+                    !provider.IsAvailable)
+                    continue;
+
+                try
+                {
+                    string result = provider.SendMessage(prompt, systemInstruction);
+                    if (!string.IsNullOrEmpty(result))
+                    {
+                        LastUsedSource = provider.ProviderName;
+                        return result;
+                    }
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+            return null;
+        }
+
         public string GetStatusSummary()
         {
             return string.Format(
                 "AI 狀態:\n" +
                 "  Gemini: {0} (失敗 {1} 次)\n" +
                 "  DuckDuckGo: {2} (失敗 {3} 次)\n" +
-                "  偏好來源: {4}\n" +
-                "  最後使用: {5}",
+                "  免費 Providers: {4} 個\n" +
+                "  偏好來源: {5}\n" +
+                "  最後使用: {6}",
                 _gemini.IsAvailable ? "已設定" : "未設定 Key",
                 _geminiFailCount,
                 _ddgAvailable ? "可用" : "不可用",
                 _ddgFailCount,
+                _freeProviders.Length,
                 _preferredSource,
                 LastUsedSource);
         }
@@ -158,16 +213,30 @@ namespace AIAgentTool.Services.AI
             if (_gemini.IsAvailable)
             {
                 bool ok = _gemini.TestConnection();
-                sb.AppendLine(ok ? "✓ 成功" : "✗ 失敗");
+                sb.AppendLine(ok ? "OK" : "FAILED");
             }
             else
             {
-                sb.AppendLine("⚠ 未設定 API Key");
+                sb.AppendLine("未設定 API Key");
             }
 
             sb.Append("測試 DuckDuckGo AI... ");
             bool ddgOk = _ddgAi.TestConnection();
-            sb.AppendLine(ddgOk ? "✓ 成功" : "✗ 失敗");
+            sb.AppendLine(ddgOk ? "OK" : "FAILED");
+
+            foreach (var provider in _freeProviders)
+            {
+                sb.Append("測試 " + provider.ProviderName + "... ");
+                try
+                {
+                    bool ok = provider.TestConnection();
+                    sb.AppendLine(ok ? "OK" : "FAILED");
+                }
+                catch
+                {
+                    sb.AppendLine("FAILED");
+                }
+            }
 
             return sb.ToString();
         }
