@@ -76,6 +76,31 @@ namespace AIAgentTool.Services.Core
         private List<TaskStep> TryLocalPlan(string input)
         {
             string lower = input.ToLower().Trim();
+                        // ★ 程式碼修正匹配（最優先）
+            bool wantFix = input.Contains("\u4fee\u6b63") || input.Contains("\u4fee\u5fa9") ||
+                input.Contains("\u4fee\u6539") || input.Contains("\u6539\u4e00\u4e0b") ||
+                input.Contains("\u554f\u984c") || input.Contains("\u6c92\u7528") ||
+                input.Contains("\u4e0d\u80fd") || input.Contains("\u7121\u6cd5") ||
+                input.Contains("\u58de\u4e86") || input.Contains("\u932f\u8aa4") ||
+                input.Contains("fix") || input.Contains("bug");
+
+            bool aboutCode = input.Contains("\u7a0b\u5f0f") || input.Contains("\u8a08\u6642") ||
+                input.Contains("\u5012\u6578") || input.Contains("\u5206\u9418") ||
+                input.Contains("\u529f\u80fd") || input.Contains("\u6309\u9215") ||
+                input.Contains("code") || input.Contains("timer");
+
+            if (wantFix && aboutCode)
+            {
+                List<TaskStep> plan = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "generate_code";
+                step.Description = input;
+                step.Desc = "fix/regenerate code: " + input;
+                plan.Add(step);
+                return plan;
+            }
+
 
             // ★ 程式碼生成匹配（最優先，用 Contains 避免編碼問題）
             bool wantCode = lower.Contains("write") || lower.Contains("make") ||
