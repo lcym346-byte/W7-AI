@@ -67,25 +67,15 @@ namespace AIAgentTool
             pnlTop.BackColor = Color.FromArgb(38, 38, 42);
             pnlTop.Padding = new Padding(12, 8, 12, 8);
 
-            lblTitle = new Label();
+                       lblTitle = new Label();
             lblTitle.Text = "AI Agent";
             lblTitle.Font = new Font("Microsoft JhengHei UI", 14F, FontStyle.Bold);
             lblTitle.ForeColor = Color.FromArgb(100, 180, 255);
-            lblTitle.Location = new Point(14, 10);
-            lblTitle.AutoSize = true;
-
-            btnNewChat = new Button();
-            btnNewChat.Text = "+ \u65b0\u5c0d\u8a71";
-            btnNewChat.FlatStyle = FlatStyle.Flat;
-            btnNewChat.FlatAppearance.BorderSize = 1;
-            btnNewChat.FlatAppearance.BorderColor = Color.FromArgb(80, 80, 90);
-            btnNewChat.BackColor = Color.FromArgb(50, 50, 58);
-            btnNewChat.ForeColor = Color.White;
-            btnNewChat.Font = new Font("Microsoft JhengHei UI", 9F);
-            btnNewChat.Size = new Size(80, 30);
-            btnNewChat.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnNewChat.Location = new Point(750, 9);
-            btnNewChat.Cursor = Cursors.Hand;
+            lblTitle.Dock = DockStyle.Left;
+            lblTitle.AutoSize = false;
+            lblTitle.Width = 130;
+            lblTitle.TextAlign = ContentAlignment.MiddleLeft;
+            lblTitle.Padding = new Padding(12, 0, 0, 0);
 
             btnSettings = new Button();
             btnSettings.Text = "\u2699 \u8a2d\u5b9a";
@@ -95,14 +85,26 @@ namespace AIAgentTool
             btnSettings.BackColor = Color.FromArgb(50, 50, 58);
             btnSettings.ForeColor = Color.White;
             btnSettings.Font = new Font("Microsoft JhengHei UI", 9F);
-            btnSettings.Size = new Size(70, 30);
-            btnSettings.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnSettings.Location = new Point(840, 9);
+            btnSettings.Dock = DockStyle.Right;
+            btnSettings.Width = 70;
             btnSettings.Cursor = Cursors.Hand;
+
+            btnNewChat = new Button();
+            btnNewChat.Text = "+ \u65b0\u5c0d\u8a71";
+            btnNewChat.FlatStyle = FlatStyle.Flat;
+            btnNewChat.FlatAppearance.BorderSize = 1;
+            btnNewChat.FlatAppearance.BorderColor = Color.FromArgb(80, 80, 90);
+            btnNewChat.BackColor = Color.FromArgb(50, 50, 58);
+            btnNewChat.ForeColor = Color.White;
+            btnNewChat.Font = new Font("Microsoft JhengHei UI", 9F);
+            btnNewChat.Dock = DockStyle.Right;
+            btnNewChat.Width = 80;
+            btnNewChat.Cursor = Cursors.Hand;
 
             pnlTop.Controls.Add(lblTitle);
             pnlTop.Controls.Add(btnNewChat);
             pnlTop.Controls.Add(btnSettings);
+
 
             // ===================== \u5de6\u5074\u5c0d\u8a71\u5217\u8868 =====================
             pnlSidebar = new Panel();
