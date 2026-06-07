@@ -57,6 +57,12 @@ namespace AIAgentTool.Services.AI
                 new OpenAiCompatibleService("OpenRouter",
                     "https://openrouter.ai/api/v1",
                     settings.OpenRouterApiKey, "meta-llama/llama-3.3-70b-instruct:free"),
+              
+                // Agnes AI - 需要免費 Key (https://agnes-ai.com)
+                new OpenAiCompatibleService("Agnes",
+                    "https://apihub.agnes-ai.com/v1",
+                    settings.AgnesApiKey, "claw-3-mini"),
+
             };
         }
 
