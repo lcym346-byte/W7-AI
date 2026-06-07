@@ -35,6 +35,7 @@ namespace AIAgentTool.Models
         public string GroqApiKey { get; set; }
         public string MistralApiKey { get; set; }
         public string OpenRouterApiKey { get; set; }
+        public string AgnesApiKey { get; set; }
         public AiSourceOption AiSource { get; set; }
         public SafetyLevel Safety { get; set; }
         public string DefaultSavePath { get; set; }
