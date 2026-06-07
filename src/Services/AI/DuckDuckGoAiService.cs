@@ -78,10 +78,11 @@ namespace AIAgentTool.Services.AI
                 }
             }
             catch (Exception ex)
-            {
-                Debug.WriteLine("DuckDuckGo AI 請求失敗: " + ex.Message);
-                return null;
-            }
+{
+    System.Windows.Forms.MessageBox.Show("DuckDuckGo AI 錯誤:\n" + ex.ToString(), "AI Debug");
+    return null;
+}
+
         }
 
         private bool ObtainVqdToken()
