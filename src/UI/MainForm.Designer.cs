@@ -154,10 +154,10 @@ namespace AIAgentTool
             pnlQuickButtons.Padding = new Padding(5, 5, 5, 5);
 
             string[] quickLabels = new string[] {
-                "搜尋", "研究", "摘要", "比較", "計算",
-                "系統", "檔案", "開啟", "關閉", "程序",
-                "CMD", "截圖", "剪貼簿", "程式碼", "批次"
-            };
+    "搜尋", "研究", "摘要", "比較", "計算",
+    "系統", "開啟", "關閉", "程序", "檔案",
+    "CMD", "截圖", "剪貼簿", "已安裝", "程式碼", "批次"
+};
 
             int qbX = 5;
             for (int i = 0; i < quickLabels.Length; i++)
