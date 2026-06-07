@@ -37,6 +37,7 @@ C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe ^
   Services\Core\AIReasoningEngine.cs ^
   Services\Core\TaskAutomationService.cs ^
   Services\Core\BackgroundTaskRunner.cs ^
+Services\AI\OpenAiCompatibleService.cs ^
   UI\MainForm.cs ^
   UI\MainForm.Designer.cs ^
   UI\SettingsForm.cs ^
