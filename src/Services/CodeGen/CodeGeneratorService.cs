@@ -18,14 +18,18 @@ namespace AIAgentTool.Services.CodeGen
         private readonly CodeTemplateLibrary _templates;
 
         // AI 系統指令 — 指導 AI 如何生成程式碼
-        private const string SYSTEM_INSTRUCTION =
+                private const string SYSTEM_INSTRUCTION =
             "你是一個 C# 程式碼生成器。請遵守以下規則：\n" +
             "1. 只使用 .NET Framework 4.0 可用的 API（不可用 async/await, HttpClient, string interpolation $\"\"）\n" +
-            "2. 必須回傳完整可編譯的 .cs 原始碼，包含 using、namespace、class、Main 方法\n" +
+            "2. 必須回傳完整可編譯的 .cs 原始碼，包含 using、namespace、class\n" +
             "3. 只回傳程式碼，不要加任何解釋文字\n" +
             "4. 用 ```csharp 和 ``` 包裹程式碼\n" +
             "5. 程式碼要有中文註解說明功能\n" +
-            "6. 如果是 Console 程式，結尾加 Console.ReadKey() 讓使用者看到結果";
+            "6. 必須使用 Windows Forms (WinForms) GUI 介面，不要用 Console.ReadLine() 或 Console.ReadKey()\n" +
+            "7. Main 方法要加 [STAThread] 屬性，並呼叫 Application.EnableVisualStyles() 和 Application.Run(new MainForm())\n" +
+            "8. 所有使用者互動透過 TextBox、Button、Label 等 WinForms 控件完成\n" +
+            "9. 引用 System.Windows.Forms 和 System.Drawing";
+
 
         public CodeGeneratorService(AiRouter aiRouter)
         {
