@@ -30,7 +30,7 @@ namespace AIAgentTool.Services.CodeGen
             "8. 所有使用者互動透過 TextBox、Button、Label 等 WinForms 控件完成\n" +
             "9. 引用 System.Windows.Forms、System.Drawing 和 System.Media（程式開頭必須加 using System.Media;）\n" +
             "10. 必須完整實現使用者描述的每一個功能點，不可省略任何要求\n" +
-            "11. 仔細閱讀使用者的描述，區分「鬧鐘」（設定時間到了提醒）和「計時器」（碼表）的差別\n" +
+"11. \u4ed4\u7d30\u95b1\u8b80\u4f7f\u7528\u8005\u7684\u63cf\u8ff0\uff0c\u5340\u5206\u300c\u9b27\u9418\u300d\uff08\u8a2d\u5b9a\u6642\u9593\u5230\u4e86\u63d0\u9192\uff09\u548c\u300c\u8a08\u6642\u5668\u300d\uff08\u78bc\u8868/\u5012\u6578\uff09\u7684\u5dee\u5225\n" +
             "12. 如果使用者要求放在特定路徑，程式本身不需處理路徑，只需寫好程式功能\n" +
             "13. 當使用者要求「變顏色」「提示」「響鈴」等功能時，必須實作（用 SystemSounds.Beep 或 Console.Beep 響鈴，用 BackColor 變色）\n" +
             "14. 【最重要】所有 WinForms 控件必須在 class 中宣告為欄位（private Label xxx; private Button xxx; 等），" +
@@ -38,8 +38,9 @@ namespace AIAgentTool.Services.CodeGen
                 "因為沒有 Designer 檔案。每個控件都必須手動設定 Location、Size、Text 等屬性。\n" +
             "15. 不要宣告沒有初始化的變數。所有控件和變數都必須在使用前完整建立和賦值。\n" +
             "16. Timer 使用 System.Windows.Forms.Timer，在建構函式中 new 並設定 Interval 和 Tick 事件。\n" +
-            "17. 程式碼中的 class 名稱必須叫 MainForm，繼承 Form。";
-
+"17. \u7a0b\u5f0f\u78bc\u4e2d\u7684 class \u540d\u7a31\u5fc5\u9808\u53eb MainForm\uff0c\u7e7c\u627f Form\u3002\n" +
+"18. \u8a08\u6642\u5668/\u5012\u6578\u529f\u80fd\uff1a\u5982\u679c\u6709\u300c\u5206\u9418\u300d\u548c\u300c\u79d2\u300d\u5169\u500b\u8f38\u5165\u6846\uff0c\u7e3d\u79d2\u6578\u5fc5\u9808\u7528 (\u5206\u9418*60)+\u79d2 \u8a08\u7b97\u3002\u4e0d\u53ef\u5ffd\u7565\u5206\u9418\u6b04\u4f4d\u3002\u5012\u6578\u6642\u6bcf\u79d2\u905e\u6e1b\u7e3d\u79d2\u6578\uff0c\u986f\u793a\u683c\u5f0f\u7528 (totalSeconds/60) \u548c (totalSeconds%60) \u8f49\u63db\u70ba mm:ss\u3002\n" +
+"19. \u7576\u4f7f\u7528\u8005\u5831\u544a\u300c\u8f38\u5165\u5206\u9418\u6c92\u7528\u300d\u300c\u53ea\u80fd60\u79d2\u300d\u7b49\u554f\u984c\u6642\uff0c\u4ee3\u8868\u4f60\u7684\u7a0b\u5f0f\u6c92\u6709\u6b63\u78ba\u8b80\u53d6\u5206\u9418\u6b04\u7684\u6578\u5b57\uff0c\u8acb\u78ba\u4fdd int totalSeconds = (int.Parse(txtMin.Text) * 60) + int.Parse(txtSec.Text); \u9019\u6a23\u7684\u908f\u8f2f\u5b58\u5728\u3002";
         public CodeGeneratorService(AiRouter aiRouter)
         {
             _aiRouter = aiRouter;
