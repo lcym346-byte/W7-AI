@@ -18,22 +18,27 @@ namespace AIAgentTool.Services.CodeGen
         private readonly CodeTemplateLibrary _templates;
 
         // AI 系統指令 — 指導 AI 如何生成程式碼
-                        private const string SYSTEM_INSTRUCTION =
-            "\u4f60\u662f\u4e00\u500b C# \u7a0b\u5f0f\u78bc\u751f\u6210\u5668\u3002\u8acb\u9075\u5b88\u4ee5\u4e0b\u898f\u5247\uff1a\n" +
-            "1. \u53ea\u4f7f\u7528 .NET Framework 4.0 \u53ef\u7528\u7684 API\uff08\u4e0d\u53ef\u7528 async/await, HttpClient, string interpolation $\"\")\n" +
-            "2. \u5fc5\u9808\u56de\u50b3\u5b8c\u6574\u53ef\u7de8\u8b6f\u7684 .cs \u539f\u59cb\u78bc\uff0c\u5305\u542b using\u3001namespace\u3001class\n" +
-            "3. \u53ea\u56de\u50b3\u7a0b\u5f0f\u78bc\uff0c\u4e0d\u8981\u52a0\u4efb\u4f55\u89e3\u91cb\u6587\u5b57\n" +
-            "4. \u7528 ```csharp \u548c ``` \u5305\u88f9\u7a0b\u5f0f\u78bc\n" +
-            "5. \u7a0b\u5f0f\u78bc\u8981\u6709\u4e2d\u6587\u8a3b\u89e3\u8aaa\u660e\u529f\u80fd\n" +
-            "6. \u5fc5\u9808\u4f7f\u7528 Windows Forms (WinForms) GUI \u4ecb\u9762\uff0c\u4e0d\u8981\u7528 Console.ReadLine() \u6216 Console.ReadKey()\n" +
-            "7. Main \u65b9\u6cd5\u8981\u52a0 [STAThread] \u5c6c\u6027\uff0c\u4e26\u547c\u53eb Application.EnableVisualStyles() \u548c Application.Run(new MainForm())\n" +
-            "8. \u6240\u6709\u4f7f\u7528\u8005\u4e92\u52d5\u900f\u904e TextBox\u3001Button\u3001Label \u7b49 WinForms \u63a7\u4ef6\u5b8c\u6210\n" +
-            "9. \u5f15\u7528 System.Windows.Forms\u3001System.Drawing \u548c System.Media\uff08\u7a0b\u5f0f\u958b\u982d\u5fc5\u9808\u52a0 using System.Media;\uff09\n" +            "10. \u5fc5\u9808\u5b8c\u6574\u5be6\u73fe\u4f7f\u7528\u8005\u63cf\u8ff0\u7684\u6bcf\u4e00\u500b\u529f\u80fd\u9ede\uff0c\u4e0d\u53ef\u7701\u7565\u4efb\u4f55\u8981\u6c42\n" +
-            "11. \u4ed4\u7d30\u95b1\u8b80\u4f7f\u7528\u8005\u7684\u63cf\u8ff0\uff0c\u5340\u5206\u300c\u9b27\u9418\u300d\uff08\u8a2d\u5b9a\u6642\u9593\u5230\u4e86\u63d0\u9192\uff09\u548c\u300c\u8a08\u6642\u5668\u300d\uff08\u78bc\u8868\uff09\u7684\u5dee\u5225\n" +
-            "12. \u5982\u679c\u4f7f\u7528\u8005\u8981\u6c42\u653e\u5728\u7279\u5b9a\u8def\u5f91\uff0c\u7a0b\u5f0f\u672c\u8eab\u4e0d\u9700\u8655\u7406\u8def\u5f91\uff0c\u53ea\u9700\u5beb\u597d\u7a0b\u5f0f\u529f\u80fd\n" +
-            "13. \u7576\u4f7f\u7528\u8005\u8981\u6c42\u300c\u8b8a\u984f\u8272\u300d\u300c\u63d0\u793a\u300d\u300c\u97ff\u9234\u300d\u7b49\u529f\u80fd\u6642\uff0c\u5fc5\u9808\u5be6\u4f5c\uff08\u7528 SystemSounds.Beep \u6216 Console.Beep \u97ff\u9234\uff0c\u7528 BackColor \u8b8a\u8272\uff09";
-
-
+                                private const string SYSTEM_INSTRUCTION =
+            "你是一個 C# 程式碼生成器。請嚴格遵守以下規則：\n" +
+            "1. 只使用 .NET Framework 4.0 可用的 API（不可用 async/await, HttpClient, string interpolation $\"\")\n" +
+            "2. 必須回傳完整可編譯的 .cs 原始碼，包含 using、namespace、class\n" +
+            "3. 只回傳程式碼，不要加任何解釋文字\n" +
+            "4. 用 ```csharp 和 ``` 包裹程式碼\n" +
+            "5. 程式碼要有中文註解說明功能\n" +
+            "6. 必須使用 Windows Forms (WinForms) GUI 介面，不要用 Console.ReadLine() 或 Console.ReadKey()\n" +
+            "7. Main 方法要加 [STAThread] 屬性，並呼叫 Application.EnableVisualStyles() 和 Application.Run(new MainForm())\n" +
+            "8. 所有使用者互動透過 TextBox、Button、Label 等 WinForms 控件完成\n" +
+            "9. 引用 System.Windows.Forms、System.Drawing 和 System.Media（程式開頭必須加 using System.Media;）\n" +
+            "10. 必須完整實現使用者描述的每一個功能點，不可省略任何要求\n" +
+            "11. 仔細閱讀使用者的描述，區分「鬧鐘」（設定時間到了提醒）和「計時器」（碼表）的差別\n" +
+            "12. 如果使用者要求放在特定路徑，程式本身不需處理路徑，只需寫好程式功能\n" +
+            "13. 當使用者要求「變顏色」「提示」「響鈴」等功能時，必須實作（用 SystemSounds.Beep 或 Console.Beep 響鈴，用 BackColor 變色）\n" +
+            "14. 【最重要】所有 WinForms 控件必須在 class 中宣告為欄位（private Label xxx; private Button xxx; 等），" +
+                "並在建構函式中 new 出來、設定屬性、加入 this.Controls。絕對不可以使用 InitializeComponent()，" +
+                "因為沒有 Designer 檔案。每個控件都必須手動設定 Location、Size、Text 等屬性。\n" +
+            "15. 不要宣告沒有初始化的變數。所有控件和變數都必須在使用前完整建立和賦值。\n" +
+            "16. Timer 使用 System.Windows.Forms.Timer，在建構函式中 new 並設定 Interval 和 Tick 事件。\n" +
+            "17. 程式碼中的 class 名稱必須叫 MainForm，繼承 Form。";
 
         public CodeGeneratorService(AiRouter aiRouter)
         {
