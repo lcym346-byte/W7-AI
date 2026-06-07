@@ -275,32 +275,71 @@ namespace AIAgentTool
         // =======================================================
         // \u804a\u5929\u6c23\u6ce1\u6846
         // =======================================================
-                private void RenderChat()
+                        private void RenderChat()
         {
             _isRendering = true;
             pnlChatInner.SuspendLayout();
             pnlChatInner.AutoScrollPosition = new Point(0, 0);
             pnlChatInner.Controls.Clear();
             _chatYOffset = 10;
+
             if (_currentSession != null)
+            {
                 foreach (var msg in _currentSession.Messages)
                     CreateBubbleControl(msg);
+            }
+
+            // 在最底部放一個隱形 spacer 確保捲動範圍正確
+            Panel spacer = new Panel();
+            spacer.Location = new Point(0, _chatYOffset + 5);
+            spacer.Size = new Size(1, 1);
+            spacer.BackColor = pnlChatInner.BackColor;
+            pnlChatInner.Controls.Add(spacer);
+
             pnlChatInner.ResumeLayout(false);
             pnlChatInner.PerformLayout();
             _isRendering = false;
-            ScrollToBottom();
-        }
 
+            // 延遲捲動到底部
+            System.Windows.Forms.Timer scrollTimer = new System.Windows.Forms.Timer();
+            scrollTimer.Interval = 50;
+            scrollTimer.Tick += delegate(object s, EventArgs ev)
+            {
+                scrollTimer.Stop();
+                scrollTimer.Dispose();
+                if (_chatYOffset > pnlChatInner.ClientSize.Height)
+                    pnlChatInner.AutoScrollPosition = new Point(0, _chatYOffset);
+            };
+            scrollTimer.Start();
+        }
 
         private void AddBubbleToUI(ChatMessage msg)
         {
             CreateBubbleControl(msg);
-            ScrollToBottom();
+
+            // 加 spacer 確保捲動正確
+            Panel spacer = new Panel();
+            spacer.Location = new Point(0, _chatYOffset + 5);
+            spacer.Size = new Size(1, 1);
+            spacer.BackColor = pnlChatInner.BackColor;
+            pnlChatInner.Controls.Add(spacer);
+
+            // 延遲捲動
+            System.Windows.Forms.Timer scrollTimer = new System.Windows.Forms.Timer();
+            scrollTimer.Interval = 50;
+            scrollTimer.Tick += delegate(object s, EventArgs ev)
+            {
+                scrollTimer.Stop();
+                scrollTimer.Dispose();
+                if (_chatYOffset > pnlChatInner.ClientSize.Height)
+                    pnlChatInner.AutoScrollPosition = new Point(0, _chatYOffset);
+            };
+            scrollTimer.Start();
         }
 
         private void CreateBubbleControl(ChatMessage msg)
         {
-            int maxWidth = pnlChatInner.ClientSize.Width - 120;
+            int maxWidth = pnlChatInner.ClientSize.Width - 140;
             if (maxWidth < 200) maxWidth = 200;
 
             Label lbl = new Label();
@@ -333,7 +372,7 @@ namespace AIAgentTool
             {
                 lbl.BackColor = Color.FromArgb(0, 100, 180);
                 lbl.ForeColor = Color.White;
-                lbl.Location = new Point(pnlChatInner.ClientSize.Width - lbl.Width - 20, _chatYOffset);
+                lbl.Location = new Point(pnlChatInner.ClientSize.Width - lbl.Width - 40, _chatYOffset);
             }
             else
             {
@@ -348,20 +387,15 @@ namespace AIAgentTool
             lblTime.ForeColor = Color.FromArgb(120, 120, 130);
             lblTime.Text = msg.Time.ToString("HH:mm");
             if (msg.Role == "user")
-                lblTime.Location = new Point(lbl.Right - lblTime.PreferredWidth, lbl.Bottom + 2);
+                lblTime.Location = new Point(lbl.Right - 40, lbl.Bottom + 2);
             else
                 lblTime.Location = new Point(lbl.Left, lbl.Bottom + 2);
 
             pnlChatInner.Controls.Add(lbl);
             pnlChatInner.Controls.Add(lblTime);
-            _chatYOffset = lbl.Bottom + 22;
+            _chatYOffset = lbl.Bottom + 28;
         }
-
-        private void ScrollToBottom()
-        {
-            pnlChatInner.AutoScrollPosition = new Point(0, pnlChatInner.DisplayRectangle.Height);
-        }
-
+     
         // =======================================================
         // Session
         // =======================================================
