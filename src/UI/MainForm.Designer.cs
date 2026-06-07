@@ -3,316 +3,291 @@ using System.Drawing;
 
 namespace AIAgentTool
 {
-    partial class SettingsForm
+    partial class MainForm
     {
         private System.ComponentModel.IContainer components = null;
 
-        private TabControl tabSettings;
-        private TabPage tabAI;
-        private TabPage tabSafety;
-        private TabPage tabGeneral;
+        // \u9802\u90e8
+        private Panel pnlTop;
+        private Label lblTitle;
+        private Button btnSettings;
+        private Button btnNewChat;
 
-        private Label lblGeminiKey;
-        private TextBox txtGeminiKey;
-        private Label lblAiSource;
-        private ComboBox cboAiSource;
-        private Label lblAiStatus;
-        private Button btnTestAi;
+        // \u5de6\u5074
+        private Panel pnlSidebar;
+        private ListBox lstSessions;
+        private Label lblSessions;
+        private ContextMenuStrip sessionMenu;
 
-        private Label lblGroqKey;
-        private TextBox txtGroqKey;
-        private Label lblMistralKey;
-        private TextBox txtMistralKey;
-        private Label lblOpenRouterKey;
-        private TextBox txtOpenRouterKey;
-        private Label lblFreeNote;
+        // \u4e2d\u9593\u4e3b\u5340 - \u5206\u9801
+        private TabControl tabMain;
+        private TabPage tabChat;
+        private TabPage tabCode;
 
-        private Label lblSafetyLevel;
-        private ComboBox cboSafetyLevel;
-        private CheckBox chkConfirmRun;
-        private CheckBox chkConfirmClose;
-        private CheckBox chkConfirmCmd;
-        private Label lblSafetyDesc;
+        // \u804a\u5929\u5340
+        private Panel pnlChatInner;
 
-        private Label lblSavePath;
-        private TextBox txtSavePath;
-        private Button btnBrowsePath;
-        private CheckBox chkMinimizeToTray;
-        private CheckBox chkBalloonNotify;
+        // \u8f38\u5165\u5340
+        private Panel pnlInput;
+        private TextBox txtInput;
+        private Button btnSend;
 
-        private Button btnOK;
-        private Button btnCancel;
+        // \u7a0b\u5f0f\u78bc\u5340
+        private RichTextBox rtbCode;
+        private Panel pnlCodeButtons;
+        private Button btnRunCode;
+        private Button btnSaveCode;
+        private Button btnCopyCode;
+
+        // \u72c0\u614b\u5217
+        private StatusStrip statusBar;
+        private ToolStripStatusLabel lblStatus;
+        private ToolStripProgressBar progressBar;
+
+        // \u7cfb\u7d71\u6258\u76e4
+        private NotifyIcon trayIcon;
+        private ContextMenuStrip trayMenu;
 
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
                 components.Dispose();
+            if (disposing && trayIcon != null)
+                trayIcon.Dispose();
             base.Dispose(disposing);
         }
 
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.SuspendLayout();
 
-            this.Text = "\u8a2d\u5b9a";
-            this.Size = new Size(520, 520);
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.BackColor = Color.FromArgb(35, 35, 40);
+            this.Text = "AI \u667a\u6167\u4ee3\u7406\u5de5\u5177 v2.0";
+            this.Size = new Size(950, 650);
+            this.MinimumSize = new Size(700, 480);
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = Color.FromArgb(30, 30, 30);
             this.ForeColor = Color.FromArgb(220, 220, 220);
-            this.Font = new Font("Microsoft JhengHei UI", 9F);
+            this.Font = new Font("Microsoft JhengHei UI", 9.5F);
+            this.KeyPreview = true;
 
-            tabSettings = new TabControl();
-            tabSettings.Location = new Point(10, 10);
-            tabSettings.Size = new Size(490, 430);
+            // ===================== \u9802\u90e8 =====================
+            pnlTop = new Panel();
+            pnlTop.Dock = DockStyle.Top;
+            pnlTop.Height = 48;
+            pnlTop.BackColor = Color.FromArgb(38, 38, 42);
 
-            // --- AI \u8a2d\u5b9a\u5206\u9801 ---
-            tabAI = new TabPage("AI \u8a2d\u5b9a");
-            tabAI.BackColor = Color.FromArgb(35, 35, 40);
-            tabAI.AutoScroll = true;
+            lblTitle = new Label();
+            lblTitle.Text = "AI Agent";
+            lblTitle.Font = new Font("Microsoft JhengHei UI", 14F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.FromArgb(100, 180, 255);
+            lblTitle.Dock = DockStyle.Left;
+            lblTitle.AutoSize = false;
+            lblTitle.Width = 130;
+            lblTitle.TextAlign = ContentAlignment.MiddleLeft;
+            lblTitle.Padding = new Padding(12, 0, 0, 0);
 
-            int y = 15;
+            btnSettings = new Button();
+            btnSettings.Text = "\u2699 \u8a2d\u5b9a";
+            btnSettings.FlatStyle = FlatStyle.Flat;
+            btnSettings.FlatAppearance.BorderSize = 1;
+            btnSettings.FlatAppearance.BorderColor = Color.FromArgb(80, 80, 90);
+            btnSettings.BackColor = Color.FromArgb(50, 50, 58);
+            btnSettings.ForeColor = Color.White;
+            btnSettings.Font = new Font("Microsoft JhengHei UI", 9F);
+            btnSettings.Dock = DockStyle.Right;
+            btnSettings.Width = 70;
+            btnSettings.Cursor = Cursors.Hand;
 
-            lblGeminiKey = new Label();
-            lblGeminiKey.Text = "Google Gemini API \u91d1\u9470:";
-            lblGeminiKey.Location = new Point(20, y);
-            lblGeminiKey.AutoSize = true;
-            y += 22;
+            btnNewChat = new Button();
+            btnNewChat.Text = "+ \u65b0\u5c0d\u8a71";
+            btnNewChat.FlatStyle = FlatStyle.Flat;
+            btnNewChat.FlatAppearance.BorderSize = 1;
+            btnNewChat.FlatAppearance.BorderColor = Color.FromArgb(80, 80, 90);
+            btnNewChat.BackColor = Color.FromArgb(50, 50, 58);
+            btnNewChat.ForeColor = Color.White;
+            btnNewChat.Font = new Font("Microsoft JhengHei UI", 9F);
+            btnNewChat.Dock = DockStyle.Right;
+            btnNewChat.Width = 80;
+            btnNewChat.Cursor = Cursors.Hand;
 
-            txtGeminiKey = new TextBox();
-            txtGeminiKey.Location = new Point(20, y);
-            txtGeminiKey.Size = new Size(350, 23);
-            txtGeminiKey.BackColor = Color.FromArgb(50, 50, 55);
-            txtGeminiKey.ForeColor = Color.White;
-            txtGeminiKey.UseSystemPasswordChar = true;
+            pnlTop.Controls.Add(lblTitle);
+            pnlTop.Controls.Add(btnNewChat);
+            pnlTop.Controls.Add(btnSettings);
 
-            btnTestAi = new Button();
-            btnTestAi.Text = "\u6e2c\u8a66";
-            btnTestAi.Location = new Point(378, y - 1);
-            btnTestAi.Size = new Size(60, 25);
-            btnTestAi.FlatStyle = FlatStyle.Flat;
-            btnTestAi.FlatAppearance.BorderSize = 0;
-            btnTestAi.BackColor = Color.FromArgb(60, 120, 60);
-            btnTestAi.ForeColor = Color.White;
-            y += 32;
+            // ===================== \u5de6\u5074 =====================
+            pnlSidebar = new Panel();
+            pnlSidebar.Dock = DockStyle.Left;
+            pnlSidebar.Width = 200;
+            pnlSidebar.BackColor = Color.FromArgb(28, 28, 32);
+            pnlSidebar.Padding = new Padding(6);
 
-            lblGroqKey = new Label();
-            lblGroqKey.Text = "Groq API \u91d1\u9470 (\u514d\u8cbb: console.groq.com/keys):";
-            lblGroqKey.Location = new Point(20, y);
-            lblGroqKey.AutoSize = true;
-            y += 22;
+            lblSessions = new Label();
+            lblSessions.Text = "\u5c0d\u8a71\u7d00\u9304";
+            lblSessions.Dock = DockStyle.Top;
+            lblSessions.Height = 28;
+            lblSessions.ForeColor = Color.FromArgb(160, 160, 170);
+            lblSessions.Font = new Font("Microsoft JhengHei UI", 9.5F, FontStyle.Bold);
+            lblSessions.TextAlign = ContentAlignment.MiddleLeft;
+            lblSessions.Padding = new Padding(4, 0, 0, 0);
 
-            txtGroqKey = new TextBox();
-            txtGroqKey.Location = new Point(20, y);
-            txtGroqKey.Size = new Size(420, 23);
-            txtGroqKey.BackColor = Color.FromArgb(50, 50, 55);
-            txtGroqKey.ForeColor = Color.White;
-            txtGroqKey.UseSystemPasswordChar = true;
-            y += 32;
+            lstSessions = new ListBox();
+            lstSessions.Dock = DockStyle.Fill;
+            lstSessions.BackColor = Color.FromArgb(32, 32, 38);
+            lstSessions.ForeColor = Color.FromArgb(200, 200, 210);
+            lstSessions.BorderStyle = BorderStyle.None;
+            lstSessions.Font = new Font("Microsoft JhengHei UI", 9F);
 
-            lblMistralKey = new Label();
-            lblMistralKey.Text = "Mistral API \u91d1\u9470 (\u514d\u8cbb: console.mistral.ai/api-keys):";
-            lblMistralKey.Location = new Point(20, y);
-            lblMistralKey.AutoSize = true;
-            y += 22;
+            sessionMenu = new ContextMenuStrip();
+            sessionMenu.Items.Add("\u91cd\u65b0\u547d\u540d", null);
+            sessionMenu.Items.Add("\u522a\u9664\u6b64\u5c0d\u8a71", null);
+            sessionMenu.Items.Add("-");
+            sessionMenu.Items.Add("\u6e05\u9664\u6240\u6709\u5c0d\u8a71", null);
+            lstSessions.ContextMenuStrip = sessionMenu;
 
-            txtMistralKey = new TextBox();
-            txtMistralKey.Location = new Point(20, y);
-            txtMistralKey.Size = new Size(420, 23);
-            txtMistralKey.BackColor = Color.FromArgb(50, 50, 55);
-            txtMistralKey.ForeColor = Color.White;
-            txtMistralKey.UseSystemPasswordChar = true;
-            y += 32;
+            pnlSidebar.Controls.Add(lstSessions);
+            pnlSidebar.Controls.Add(lblSessions);
 
-            lblOpenRouterKey = new Label();
-            lblOpenRouterKey.Text = "OpenRouter API \u91d1\u9470 (\u514d\u8cbb: openrouter.ai/keys):";
-            lblOpenRouterKey.Location = new Point(20, y);
-            lblOpenRouterKey.AutoSize = true;
-            y += 22;
+            // ===================== \u4e3b\u5340\u57df\u5206\u9801 =====================
+            tabMain = new TabControl();
+            tabMain.Dock = DockStyle.Fill;
+            tabMain.Font = new Font("Microsoft JhengHei UI", 9.5F);
+            tabMain.BackColor = Color.FromArgb(32, 32, 36);
 
-            txtOpenRouterKey = new TextBox();
-            txtOpenRouterKey.Location = new Point(20, y);
-            txtOpenRouterKey.Size = new Size(420, 23);
-            txtOpenRouterKey.BackColor = Color.FromArgb(50, 50, 55);
-            txtOpenRouterKey.ForeColor = Color.White;
-            txtOpenRouterKey.UseSystemPasswordChar = true;
-            y += 32;
+            // --- \u804a\u5929\u5206\u9801 ---
+            tabChat = new TabPage("\u804a\u5929");
+            tabChat.BackColor = Color.FromArgb(32, 32, 36);
 
-            lblFreeNote = new Label();
-            lblFreeNote.Text = "* LLM7 (deepseek-v3) \u4e0d\u9700\u8981 Key\uff0c\u81ea\u52d5\u5099\u63f4";
-            lblFreeNote.Location = new Point(20, y);
-            lblFreeNote.AutoSize = true;
-            lblFreeNote.ForeColor = Color.FromArgb(150, 200, 255);
-            y += 28;
+            pnlChatInner = new Panel();
+            pnlChatInner.Dock = DockStyle.Fill;
+            pnlChatInner.AutoScroll = true;
+            pnlChatInner.BackColor = Color.FromArgb(32, 32, 36);
 
-            lblAiSource = new Label();
-            lblAiSource.Text = "AI \u4f86\u6e90\u512a\u5148\u9806\u5e8f:";
-            lblAiSource.Location = new Point(20, y);
-            lblAiSource.AutoSize = true;
-            y += 22;
+            pnlInput = new Panel();
+            pnlInput.Dock = DockStyle.Bottom;
+            pnlInput.Height = 65;
+            pnlInput.BackColor = Color.FromArgb(40, 40, 45);
+            pnlInput.Padding = new Padding(10, 8, 10, 8);
 
-            cboAiSource = new ComboBox();
-            cboAiSource.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboAiSource.Location = new Point(20, y);
-            cboAiSource.Size = new Size(300, 23);
-            cboAiSource.BackColor = Color.FromArgb(50, 50, 55);
-            cboAiSource.ForeColor = Color.White;
-            cboAiSource.Items.AddRange(new object[] {
-                "\u81ea\u52d5 (Gemini->DuckDuckGo->\u514d\u8cbb->\u96e2\u7dda)",
-                "\u50c5 Gemini",
-                "\u50c5 DuckDuckGo AI",
-                "\u50c5\u96e2\u7dda\u6a21\u677f"
-            });
-            y += 30;
+            txtInput = new TextBox();
+            txtInput.Multiline = true;
+            txtInput.Dock = DockStyle.Fill;
+            txtInput.BackColor = Color.FromArgb(50, 50, 56);
+            txtInput.ForeColor = Color.White;
+            txtInput.Font = new Font("Microsoft JhengHei UI", 11F);
+            txtInput.BorderStyle = BorderStyle.FixedSingle;
+            txtInput.ScrollBars = ScrollBars.Vertical;
 
-            lblAiStatus = new Label();
-            lblAiStatus.Text = "\u72c0\u614b: \u672a\u6e2c\u8a66";
-            lblAiStatus.Location = new Point(20, y);
-            lblAiStatus.Size = new Size(420, 40);
-            lblAiStatus.ForeColor = Color.Gray;
+            btnSend = new Button();
+            btnSend.Text = "\u50b3\u9001";
+            btnSend.Dock = DockStyle.Right;
+            btnSend.Width = 70;
+            btnSend.FlatStyle = FlatStyle.Flat;
+            btnSend.FlatAppearance.BorderSize = 0;
+            btnSend.BackColor = Color.FromArgb(0, 120, 210);
+            btnSend.ForeColor = Color.White;
+            btnSend.Font = new Font("Microsoft JhengHei UI", 10.5F, FontStyle.Bold);
+            btnSend.Cursor = Cursors.Hand;
 
-            tabAI.Controls.Add(lblGeminiKey);
-            tabAI.Controls.Add(txtGeminiKey);
-            tabAI.Controls.Add(btnTestAi);
-            tabAI.Controls.Add(lblGroqKey);
-            tabAI.Controls.Add(txtGroqKey);
-            tabAI.Controls.Add(lblMistralKey);
-            tabAI.Controls.Add(txtMistralKey);
-            tabAI.Controls.Add(lblOpenRouterKey);
-            tabAI.Controls.Add(txtOpenRouterKey);
-            tabAI.Controls.Add(lblFreeNote);
-            tabAI.Controls.Add(lblAiSource);
-            tabAI.Controls.Add(cboAiSource);
-            tabAI.Controls.Add(lblAiStatus);
+            pnlInput.Controls.Add(txtInput);
+            pnlInput.Controls.Add(btnSend);
 
-            // --- \u5b89\u5168\u8a2d\u5b9a\u5206\u9801 ---
-            tabSafety = new TabPage("\u5b89\u5168\u8a2d\u5b9a");
-            tabSafety.BackColor = Color.FromArgb(35, 35, 40);
+            tabChat.Controls.Add(pnlChatInner);
+            tabChat.Controls.Add(pnlInput);
 
-            lblSafetyLevel = new Label();
-            lblSafetyLevel.Text = "\u5b89\u5168\u7b49\u7d1a:";
-            lblSafetyLevel.Location = new Point(20, 25);
-            lblSafetyLevel.AutoSize = true;
+            // --- \u7a0b\u5f0f\u78bc\u5206\u9801 ---
+            tabCode = new TabPage("\u7a0b\u5f0f\u78bc");
+            tabCode.BackColor = Color.FromArgb(25, 25, 30);
 
-            cboSafetyLevel = new ComboBox();
-            cboSafetyLevel.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboSafetyLevel.Location = new Point(20, 48);
-            cboSafetyLevel.Size = new Size(200, 23);
-            cboSafetyLevel.BackColor = Color.FromArgb(50, 50, 55);
-            cboSafetyLevel.ForeColor = Color.White;
-            cboSafetyLevel.Items.AddRange(new object[] {
-                "\u56b4\u683c (\u5168\u90e8\u78ba\u8a8d)",
-                "\u4e2d\u7b49 (\u5371\u96aa\u64cd\u4f5c\u78ba\u8a8d)",
-                "\u5bec\u9b06 (\u50c5\u7de8\u8b6f\u57f7\u884c\u78ba\u8a8d)"
-            });
+            rtbCode = new RichTextBox();
+            rtbCode.Dock = DockStyle.Fill;
+            rtbCode.BackColor = Color.FromArgb(20, 20, 25);
+            rtbCode.ForeColor = Color.FromArgb(200, 220, 255);
+            rtbCode.Font = new Font("Consolas", 10F);
+            rtbCode.BorderStyle = BorderStyle.None;
+            rtbCode.WordWrap = false;
+            rtbCode.AcceptsTab = true;
 
-            chkConfirmRun = new CheckBox();
-            chkConfirmRun.Text = "\u57f7\u884c\u7de8\u8b6f\u7a0b\u5f0f\u524d\u78ba\u8a8d";
-            chkConfirmRun.Location = new Point(20, 90);
-            chkConfirmRun.AutoSize = true;
-            chkConfirmRun.ForeColor = Color.FromArgb(220, 220, 220);
-            chkConfirmRun.Checked = true;
+            pnlCodeButtons = new Panel();
+            pnlCodeButtons.Dock = DockStyle.Bottom;
+            pnlCodeButtons.Height = 38;
+            pnlCodeButtons.BackColor = Color.FromArgb(35, 35, 42);
 
-            chkConfirmClose = new CheckBox();
-            chkConfirmClose.Text = "\u95dc\u9589\u7a0b\u5f0f\u524d\u78ba\u8a8d";
-            chkConfirmClose.Location = new Point(20, 118);
-            chkConfirmClose.AutoSize = true;
-            chkConfirmClose.ForeColor = Color.FromArgb(220, 220, 220);
-            chkConfirmClose.Checked = true;
+            btnRunCode = new Button();
+            btnRunCode.Text = "> \u7de8\u8b6f\u57f7\u884c";
+            btnRunCode.Location = new Point(8, 5);
+            btnRunCode.Size = new Size(90, 28);
+            btnRunCode.FlatStyle = FlatStyle.Flat;
+            btnRunCode.FlatAppearance.BorderSize = 0;
+            btnRunCode.BackColor = Color.FromArgb(50, 120, 50);
+            btnRunCode.ForeColor = Color.White;
+            btnRunCode.Cursor = Cursors.Hand;
 
-            chkConfirmCmd = new CheckBox();
-            chkConfirmCmd.Text = "\u57f7\u884c CMD \u547d\u4ee4\u524d\u78ba\u8a8d";
-            chkConfirmCmd.Location = new Point(20, 146);
-            chkConfirmCmd.AutoSize = true;
-            chkConfirmCmd.ForeColor = Color.FromArgb(220, 220, 220);
+            btnSaveCode = new Button();
+            btnSaveCode.Text = "\u5132\u5b58";
+            btnSaveCode.Location = new Point(105, 5);
+            btnSaveCode.Size = new Size(70, 28);
+            btnSaveCode.FlatStyle = FlatStyle.Flat;
+            btnSaveCode.FlatAppearance.BorderSize = 0;
+            btnSaveCode.BackColor = Color.FromArgb(60, 60, 70);
+            btnSaveCode.ForeColor = Color.White;
+            btnSaveCode.Cursor = Cursors.Hand;
 
-            lblSafetyDesc = new Label();
-            lblSafetyDesc.Text = "\u8a3b\u610f\uff1a\u5371\u96aa\u547d\u4ee4 (format, del C:\\ \u7b49)\n\u7121\u8ad6\u5b89\u5168\u7b49\u7d1a\u5982\u4f55\u90fd\u6703\u88ab\u5c01\u9396\u3002";
-            lblSafetyDesc.Location = new Point(20, 185);
-            lblSafetyDesc.Size = new Size(400, 40);
-            lblSafetyDesc.ForeColor = Color.FromArgb(255, 180, 100);
+            btnCopyCode = new Button();
+            btnCopyCode.Text = "\u8907\u88fd";
+            btnCopyCode.Location = new Point(182, 5);
+            btnCopyCode.Size = new Size(70, 28);
+            btnCopyCode.FlatStyle = FlatStyle.Flat;
+            btnCopyCode.FlatAppearance.BorderSize = 0;
+            btnCopyCode.BackColor = Color.FromArgb(60, 60, 70);
+            btnCopyCode.ForeColor = Color.White;
+            btnCopyCode.Cursor = Cursors.Hand;
 
-            tabSafety.Controls.Add(lblSafetyLevel);
-            tabSafety.Controls.Add(cboSafetyLevel);
-            tabSafety.Controls.Add(chkConfirmRun);
-            tabSafety.Controls.Add(chkConfirmClose);
-            tabSafety.Controls.Add(chkConfirmCmd);
-            tabSafety.Controls.Add(lblSafetyDesc);
+            pnlCodeButtons.Controls.Add(btnRunCode);
+            pnlCodeButtons.Controls.Add(btnSaveCode);
+            pnlCodeButtons.Controls.Add(btnCopyCode);
 
-            // --- \u4e00\u822c\u8a2d\u5b9a\u5206\u9801 ---
-            tabGeneral = new TabPage("\u4e00\u822c\u8a2d\u5b9a");
-            tabGeneral.BackColor = Color.FromArgb(35, 35, 40);
+            tabCode.Controls.Add(rtbCode);
+            tabCode.Controls.Add(pnlCodeButtons);
 
-            lblSavePath = new Label();
-            lblSavePath.Text = "\u9810\u8a2d\u5132\u5b58\u8def\u5f91:";
-            lblSavePath.Location = new Point(20, 25);
-            lblSavePath.AutoSize = true;
+            tabMain.TabPages.Add(tabChat);
+            tabMain.TabPages.Add(tabCode);
 
-            txtSavePath = new TextBox();
-            txtSavePath.Location = new Point(20, 48);
-            txtSavePath.Size = new Size(330, 23);
-            txtSavePath.BackColor = Color.FromArgb(50, 50, 55);
-            txtSavePath.ForeColor = Color.White;
+            // ===================== \u72c0\u614b\u5217 =====================
+            statusBar = new StatusStrip();
+            statusBar.BackColor = Color.FromArgb(35, 35, 42);
+            statusBar.ForeColor = Color.FromArgb(160, 160, 170);
 
-            btnBrowsePath = new Button();
-            btnBrowsePath.Text = "...";
-            btnBrowsePath.Location = new Point(358, 47);
-            btnBrowsePath.Size = new Size(35, 25);
-            btnBrowsePath.FlatStyle = FlatStyle.Flat;
-            btnBrowsePath.FlatAppearance.BorderSize = 0;
-            btnBrowsePath.BackColor = Color.FromArgb(60, 60, 70);
-            btnBrowsePath.ForeColor = Color.White;
+            lblStatus = new ToolStripStatusLabel();
+            lblStatus.Text = "\u5c31\u7dd2";
+            lblStatus.Spring = true;
+            lblStatus.TextAlign = ContentAlignment.MiddleLeft;
 
-            chkMinimizeToTray = new CheckBox();
-            chkMinimizeToTray.Text = "\u6700\u5c0f\u5316\u81f3\u7cfb\u7d71\u6258\u76e4";
-            chkMinimizeToTray.Location = new Point(20, 90);
-            chkMinimizeToTray.AutoSize = true;
-            chkMinimizeToTray.ForeColor = Color.FromArgb(220, 220, 220);
+            progressBar = new ToolStripProgressBar();
+            progressBar.Size = new Size(180, 16);
+            progressBar.Minimum = 0;
+            progressBar.Maximum = 100;
 
-            chkBalloonNotify = new CheckBox();
-            chkBalloonNotify.Text = "\u4efb\u52d9\u5b8c\u6210\u6642\u986f\u793a\u901a\u77e5";
-            chkBalloonNotify.Location = new Point(20, 118);
-            chkBalloonNotify.AutoSize = true;
-            chkBalloonNotify.ForeColor = Color.FromArgb(220, 220, 220);
+            statusBar.Items.Add(lblStatus);
+            statusBar.Items.Add(progressBar);
 
-            tabGeneral.Controls.Add(lblSavePath);
-            tabGeneral.Controls.Add(txtSavePath);
-            tabGeneral.Controls.Add(btnBrowsePath);
-            tabGeneral.Controls.Add(chkMinimizeToTray);
-            tabGeneral.Controls.Add(chkBalloonNotify);
+            // ===================== \u6258\u76e4 =====================
+            trayMenu = new ContextMenuStrip();
+            trayMenu.Items.Add("\u986f\u793a\u4e3b\u8996\u7a97", null);
+            trayMenu.Items.Add("-");
+            trayMenu.Items.Add("\u7d50\u675f\u7a0b\u5f0f", null);
 
-            tabSettings.TabPages.Add(tabAI);
-            tabSettings.TabPages.Add(tabSafety);
-            tabSettings.TabPages.Add(tabGeneral);
+            trayIcon = new NotifyIcon(this.components);
+            trayIcon.Text = "AI \u667a\u6167\u4ee3\u7406\u5de5\u5177";
+            trayIcon.ContextMenuStrip = trayMenu;
+            trayIcon.Visible = false;
+            try { trayIcon.Icon = System.Drawing.SystemIcons.Application; } catch { }
 
-            // \u5e95\u90e8\u6309\u9215
-            btnOK = new Button();
-            btnOK.Text = "\u78ba\u5b9a";
-            btnOK.Location = new Point(310, 450);
-            btnOK.Size = new Size(80, 30);
-            btnOK.FlatStyle = FlatStyle.Flat;
-            btnOK.FlatAppearance.BorderSize = 0;
-            btnOK.BackColor = Color.FromArgb(60, 130, 60);
-            btnOK.ForeColor = Color.White;
-            btnOK.DialogResult = DialogResult.OK;
-
-            btnCancel = new Button();
-            btnCancel.Text = "\u53d6\u6d88";
-            btnCancel.Location = new Point(400, 450);
-            btnCancel.Size = new Size(80, 30);
-            btnCancel.FlatStyle = FlatStyle.Flat;
-            btnCancel.FlatAppearance.BorderSize = 0;
-            btnCancel.BackColor = Color.FromArgb(100, 60, 60);
-            btnCancel.ForeColor = Color.White;
-            btnCancel.DialogResult = DialogResult.Cancel;
-
-            this.Controls.Add(tabSettings);
-            this.Controls.Add(btnOK);
-            this.Controls.Add(btnCancel);
-            this.AcceptButton = btnOK;
-            this.CancelButton = btnCancel;
+            // ===================== \u52a0\u5165\u4e3b\u8996\u7a97 =====================
+            this.Controls.Add(tabMain);
+            this.Controls.Add(pnlSidebar);
+            this.Controls.Add(statusBar);
+            this.Controls.Add(pnlTop);
 
             this.ResumeLayout(false);
         }
