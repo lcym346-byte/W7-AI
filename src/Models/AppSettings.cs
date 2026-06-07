@@ -9,7 +9,7 @@ namespace AIAgentTool.Models
     /// </summary>
     public enum AiSourceOption
     {
-        Auto,           // 自動選擇 (Gemini → DDG → 離線)
+        Auto,           // 自動選擇 (Gemini → DDG → Free → 離線)
         GeminiOnly,     // 僅 Gemini
         DuckDuckGoOnly, // 僅 DuckDuckGo AI
         Offline         // 僅離線模板
@@ -69,25 +69,24 @@ namespace AIAgentTool.Models
                 string json = string.Format(
                     "{{\n" +
                     "  \"GeminiApiKey\": \"{0}\",\n" +
-                    "  \"AiSource\": \"{1}\",\n" +
-                    "  \"Safety\": \"{2}\",\n" +
-                    "  \"DefaultSavePath\": \"{3}\",\n" +
-                    "  \"MinimizeToTray\": {4},\n" +
-                    "  \"ShowBalloonNotify\": {5}\n" +
-                    "  \"GroqApiKey\": \"{6}\",\n" +
-                    "  \"MistralApiKey\": \"{7}\",\n" +
-                    "  \"OpenRouterApiKey\": \"{8}\"\n" +
+                    "  \"GroqApiKey\": \"{1}\",\n" +
+                    "  \"MistralApiKey\": \"{2}\",\n" +
+                    "  \"OpenRouterApiKey\": \"{3}\",\n" +
+                    "  \"AiSource\": \"{4}\",\n" +
+                    "  \"Safety\": \"{5}\",\n" +
+                    "  \"DefaultSavePath\": \"{6}\",\n" +
+                    "  \"MinimizeToTray\": {7},\n" +
+                    "  \"ShowBalloonNotify\": {8}\n" +
                     "}}",
                     EscapeJsonString(GeminiApiKey),
+                    EscapeJsonString(GroqApiKey),
+                    EscapeJsonString(MistralApiKey),
+                    EscapeJsonString(OpenRouterApiKey),
                     AiSource.ToString(),
                     Safety.ToString(),
                     EscapeJsonString(DefaultSavePath),
                     MinimizeToTray.ToString().ToLower(),
-                    ShowBalloonNotify.ToString().ToLower(),
-                    EscapeJsonString(GroqApiKey),
-                    EscapeJsonString(MistralApiKey),
-                    EscapeJsonString(OpenRouterApiKey)
-                    );
+                    ShowBalloonNotify.ToString().ToLower());
 
                 File.WriteAllText(SettingsFilePath, json);
             }
@@ -113,6 +112,9 @@ namespace AIAgentTool.Models
 
                 // 手動解析 JSON (不依賴外部套件)
                 settings.GeminiApiKey = ExtractJsonStringValue(json, "GeminiApiKey");
+                settings.GroqApiKey = ExtractJsonStringValue(json, "GroqApiKey");
+                settings.MistralApiKey = ExtractJsonStringValue(json, "MistralApiKey");
+                settings.OpenRouterApiKey = ExtractJsonStringValue(json, "OpenRouterApiKey");
                 settings.DefaultSavePath = ExtractJsonStringValue(json, "DefaultSavePath");
 
                 string aiSource = ExtractJsonStringValue(json, "AiSource");
