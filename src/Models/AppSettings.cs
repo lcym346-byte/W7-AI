@@ -32,6 +32,9 @@ namespace AIAgentTool.Models
     {
         // 設定值
         public string GeminiApiKey { get; set; }
+        public string GroqApiKey { get; set; }
+        public string MistralApiKey { get; set; }
+        public string OpenRouterApiKey { get; set; }
         public AiSourceOption AiSource { get; set; }
         public SafetyLevel Safety { get; set; }
         public string DefaultSavePath { get; set; }
@@ -45,6 +48,9 @@ namespace AIAgentTool.Models
         public AppSettings()
         {
             GeminiApiKey = "";
+            GroqApiKey = "";
+            MistralApiKey = "";
+            OpenRouterApiKey = "";
             AiSource = AiSourceOption.Auto;
             Safety = SafetyLevel.Medium;
             DefaultSavePath = Environment.GetFolderPath(
@@ -68,13 +74,20 @@ namespace AIAgentTool.Models
                     "  \"DefaultSavePath\": \"{3}\",\n" +
                     "  \"MinimizeToTray\": {4},\n" +
                     "  \"ShowBalloonNotify\": {5}\n" +
+                    "  \"GroqApiKey\": \"{6}\",\n" +
+                    "  \"MistralApiKey\": \"{7}\",\n" +
+                    "  \"OpenRouterApiKey\": \"{8}\"\n" +
                     "}}",
                     EscapeJsonString(GeminiApiKey),
                     AiSource.ToString(),
                     Safety.ToString(),
                     EscapeJsonString(DefaultSavePath),
                     MinimizeToTray.ToString().ToLower(),
-                    ShowBalloonNotify.ToString().ToLower());
+                    ShowBalloonNotify.ToString().ToLower(),
+                    EscapeJsonString(GroqApiKey),
+                    EscapeJsonString(MistralApiKey),
+                    EscapeJsonString(OpenRouterApiKey)
+                    );
 
                 File.WriteAllText(SettingsFilePath, json);
             }
