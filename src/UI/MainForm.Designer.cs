@@ -22,7 +22,6 @@ namespace AIAgentTool
         // \u804a\u5929\u5340
         private Panel pnlChat;
         private Panel pnlChatInner;
-        private VScrollBar vscChat;
 
         // \u8f38\u5165\u5340
         private Panel pnlInput;
