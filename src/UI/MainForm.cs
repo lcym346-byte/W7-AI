@@ -24,6 +24,7 @@ namespace AIAgentTool
         private ChatSession _currentSession;
         private string _sessionsDir;
         private int _chatYOffset = 10;
+        private bool _isRendering;
 
         public MainForm()
         {
@@ -86,7 +87,7 @@ namespace AIAgentTool
 
             this.FormClosing += MainForm_FormClosing;
             this.Resize += MainForm_Resize;
-            pnlChatInner.Resize += delegate { RenderChat(); };
+                        pnlChatInner.Resize += delegate             {                 if (!_isRendering)                     RenderChat();             };
         }
 
         // =======================================================
@@ -274,17 +275,22 @@ namespace AIAgentTool
         // =======================================================
         // \u804a\u5929\u6c23\u6ce1\u6846
         // =======================================================
-        private void RenderChat()
+                private void RenderChat()
         {
+            _isRendering = true;
             pnlChatInner.SuspendLayout();
+            pnlChatInner.AutoScrollPosition = new Point(0, 0);
             pnlChatInner.Controls.Clear();
             _chatYOffset = 10;
             if (_currentSession != null)
                 foreach (var msg in _currentSession.Messages)
                     CreateBubbleControl(msg);
-            pnlChatInner.ResumeLayout();
+            pnlChatInner.ResumeLayout(false);
+            pnlChatInner.PerformLayout();
+            _isRendering = false;
             ScrollToBottom();
         }
+
 
         private void AddBubbleToUI(ChatMessage msg)
         {
