@@ -110,10 +110,11 @@ namespace AIAgentTool.Services.AI
                 }
             }
             catch (Exception ex)
-            {
-                Debug.WriteLine("取得 VQD Token 失敗: " + ex.Message);
-                return false;
-            }
+{
+    System.Windows.Forms.MessageBox.Show("VQD Token 錯誤:\n" + ex.ToString(), "VQD Debug");
+    return false;
+}
+
         }
 
         private string BuildChatJson(string prompt)
