@@ -155,30 +155,31 @@ namespace AIAgentTool
         }
 
         private TaskType? GetSelectedTaskType()
-        {
-            if (cboTaskType.SelectedIndex <= 0) return null;
+{
+    if (cboTaskType.SelectedIndex <= 0) return null; // 自動判斷 → null → 交給 AI 規劃
 
-            switch (cboTaskType.SelectedIndex)
-            {
-                case 1: return TaskType.Search;
-                case 2: return TaskType.AutoResearch;
-                case 3: return TaskType.Summarize;
-                case 4: return TaskType.Compare;
-                case 5: return TaskType.Calculate;
-                case 6: return TaskType.SystemInfo;
-                case 7: return TaskType.LaunchApp;
-                case 8: return TaskType.CloseApp;
-                case 9: return TaskType.ListProcesses;
-                case 10: return TaskType.FileManagement;
-                case 11: return TaskType.RunCommand;
-                case 12: return TaskType.ScreenCapture;
-                case 13: return TaskType.ClipboardOp;
-                case 14: return TaskType.InstalledApps;
-                case 15: return TaskType.GenerateCode;
-                case 16: return TaskType.BatchOperation;
-                default: return null;
-            }
-        }
+    switch (cboTaskType.SelectedIndex)
+    {
+        case 1: return TaskType.Search;
+        case 2: return TaskType.AutoResearch;
+        case 3: return TaskType.Summarize;
+        case 4: return TaskType.Compare;
+        case 5: return TaskType.Calculate;
+        case 6: return TaskType.SystemInfo;
+        case 7: return TaskType.LaunchApp;
+        case 8: return TaskType.CloseApp;
+        case 9: return TaskType.ListProcesses;
+        case 10: return TaskType.FileManagement;
+        case 11: return TaskType.RunCommand;
+        case 12: return TaskType.ScreenCapture;
+        case 13: return TaskType.ClipboardOp;
+        case 14: return TaskType.InstalledApps;
+        case 15: return TaskType.GenerateCode;
+        case 16: return TaskType.BatchOperation;
+        default: return null;
+    }
+}
+
 
         // ═══════════════════════════════════════════
         // 任務完成回呼
@@ -325,41 +326,61 @@ namespace AIAgentTool
         // 快捷按鈕
         // ═══════════════════════════════════════════
         private void QuickButton_Click(object sender, EventArgs e)
-        {
-            Button btn = sender as Button;
-            if (btn == null || btn.Tag == null) return;
+{
+    Button btn = sender as Button;
+    if (btn == null || btn.Tag == null) return;
 
-            int index = (int)btn.Tag;
-            // 對應 TaskType 的索引 (cboTaskType +1)
-            if (index + 1 < cboTaskType.Items.Count)
-            {
-                cboTaskType.SelectedIndex = index + 1;
-            }
+    int index = (int)btn.Tag;
 
-            // 某些可直接執行
-            switch (index)
-            {
-                case 5: // 系統
-                    txtQuery.Text = "系統資訊";
-                    ExecuteCurrentQuery();
-                    break;
-                case 9: // 程序
-                    txtQuery.Text = "程序列表";
-                    ExecuteCurrentQuery();
-                    break;
-                case 11: // 截圖
-                    txtQuery.Text = "截圖";
-                    ExecuteCurrentQuery();
-                    break;
-                case 12: // 剪貼簿
-                    txtQuery.Text = "讀取剪貼簿";
-                    ExecuteCurrentQuery();
-                    break;
-                default:
-                    txtQuery.Focus();
-                    break;
-            }
-        }
+    // 快捷按鈕 → 下拉選單正確索引
+    int[] quickToCombo = new int[] {
+        1,   // 0: 搜尋
+        2,   // 1: 研究
+        3,   // 2: 摘要
+        4,   // 3: 比較
+        5,   // 4: 計算
+        6,   // 5: 系統
+        7,   // 6: 開啟
+        8,   // 7: 關閉
+        9,   // 8: 程序
+        10,  // 9: 檔案
+        11,  // 10: CMD
+        12,  // 11: 截圖
+        13,  // 12: 剪貼簿
+        14,  // 13: 已安裝
+        15,  // 14: 程式碼
+        16   // 15: 批次
+    };
+
+    if (index < quickToCombo.Length && quickToCombo[index] < cboTaskType.Items.Count)
+    {
+        cboTaskType.SelectedIndex = quickToCombo[index];
+    }
+
+    switch (index)
+    {
+        case 5: // 系統
+            txtQuery.Text = "系統資訊";
+            ExecuteCurrentQuery();
+            break;
+        case 8: // 程序
+            txtQuery.Text = "程序列表";
+            ExecuteCurrentQuery();
+            break;
+        case 11: // 截圖
+            txtQuery.Text = "截圖";
+            ExecuteCurrentQuery();
+            break;
+        case 12: // 剪貼簿
+            txtQuery.Text = "讀取剪貼簿";
+            ExecuteCurrentQuery();
+            break;
+        default:
+            txtQuery.Focus();
+            break;
+    }
+}
+
 
         private void QuickButton_MouseEnter(object sender, EventArgs e)
         {
