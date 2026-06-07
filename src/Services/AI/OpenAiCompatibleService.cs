@@ -1,97 +1,66 @@
 using System;
+using System.IO;
+using System.Net;
 using System.Text;
-using AIAgentTool.Models;
+using AIAgentTool.Utils;
 
 namespace AIAgentTool.Services.AI
 {
-    public class AiRouter
+    public class OpenAiCompatibleService
     {
-        private readonly GeminiApiService _gemini;
-        private readonly DuckDuckGoAiService _ddgAi;
-        private readonly OpenAiCompatibleService[] _freeProviders;
-        private readonly AiSourceOption _preferredSource;
+        private readonly string _baseUrl;
+        private readonly string _apiKey;
+        private readonly string _model;
+        private readonly string _providerName;
 
-        private bool _geminiAvailable;
-        private bool _ddgAvailable;
-        private DateTime _lastGeminiFailTime;
-        private DateTime _lastDdgFailTime;
-        private int _geminiFailCount;
-        private int _ddgFailCount;
+        public string ProviderName { get { return _providerName; } }
+        public bool IsAvailable { get { return true; } }
 
-        private const int MAX_FAIL_BEFORE_SKIP = 3;
-        private static readonly TimeSpan RETRY_WAIT = TimeSpan.FromMinutes(5);
-
-        public string LastUsedSource { get; private set; }
-
-        public AiRouter(AppSettings settings)
+        public OpenAiCompatibleService(string providerName, string baseUrl, string apiKey, string model)
         {
-            _preferredSource = settings.AiSource;
-            _gemini = new GeminiApiService(settings.GeminiApiKey);
-            _ddgAi = new DuckDuckGoAiService();
-            _geminiAvailable = _gemini.IsAvailable;
-            _ddgAvailable = true;
-            _lastGeminiFailTime = DateTime.MinValue;
-            _lastDdgFailTime = DateTime.MinValue;
-            _geminiFailCount = 0;
-            _ddgFailCount = 0;
-            LastUsedSource = "None";
-
-            // 初始化免費 OpenAI 相容 providers
-            _freeProviders = new OpenAiCompatibleService[]
-            {
-                // LLM7 - 完全不需要 API Key
-                new OpenAiCompatibleService("LLM7",
-                    "https://api.llm7.io/v1", "", "deepseek-v3-0324"),
-
-                // Groq - 需要免費 Key (https://console.groq.com/keys)
-                new OpenAiCompatibleService("Groq",
-                    "https://api.groq.com/openai/v1",
-                    settings.GroqApiKey, "llama-3.3-70b-versatile"),
-
-                // Mistral - 需要免費 Key (https://console.mistral.ai/api-keys)
-                new OpenAiCompatibleService("Mistral",
-                    "https://api.mistral.ai/v1",
-                    settings.MistralApiKey, "mistral-small-latest"),
-
-                // OpenRouter - 需要免費 Key (https://openrouter.ai/keys)
-                new OpenAiCompatibleService("OpenRouter",
-                    "https://openrouter.ai/api/v1",
-                    settings.OpenRouterApiKey, "meta-llama/llama-3.3-70b-instruct:free"),
-            };
+            _providerName = providerName;
+            _baseUrl = baseUrl.TrimEnd('/');
+            _apiKey = apiKey ?? "";
+            _model = model;
         }
 
         public string SendMessage(string prompt, string systemInstruction)
         {
-            string result = null;
-
-            switch (_preferredSource)
+            try
             {
-                case AiSourceOption.GeminiOnly:
-                    result = TryGemini(prompt, systemInstruction);
-                    break;
-                case AiSourceOption.DuckDuckGoOnly:
-                    result = TryDuckDuckGo(prompt);
-                    break;
-                case AiSourceOption.Offline:
-                    LastUsedSource = "Offline";
-                    return null;
-                case AiSourceOption.Auto:
-                default:
-                    // Gemini 優先
-                    result = TryGemini(prompt, systemInstruction);
-                    // DuckDuckGo 其次
-                    if (result == null)
-                        result = TryDuckDuckGo(prompt);
-                    // 免費 providers 最後
-                    if (result == null)
-                        result = TryFreeProviders(prompt, systemInstruction);
-                    break;
+                string url = _baseUrl + "/chat/completions";
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                request.Method = "POST";
+                request.ContentType = "application/json; charset=utf-8";
+                request.Timeout = 60000;
+                request.ReadWriteTimeout = 60000;
+                request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64)";
+
+                if (!string.IsNullOrEmpty(_apiKey))
+                {
+                    request.Headers.Add("Authorization", "Bearer " + _apiKey);
+                }
+
+                string json = BuildRequestJson(prompt, systemInstruction);
+                byte[] data = Encoding.UTF8.GetBytes(json);
+                request.ContentLength = data.Length;
+
+                using (Stream reqStream = request.GetRequestStream())
+                {
+                    reqStream.Write(data, 0, data.Length);
+                }
+
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                using (StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+                {
+                    string responseText = reader.ReadToEnd();
+                    return ParseResponse(responseText);
+                }
             }
-
-            if (result == null)
-                LastUsedSource = "None (All Failed)";
-
-            return result;
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         public string SendMessage(string prompt)
@@ -99,146 +68,81 @@ namespace AIAgentTool.Services.AI
             return SendMessage(prompt, null);
         }
 
-        public string Ask(string prompt)
+        public bool TestConnection()
         {
-            return SendMessage(prompt, null);
+            string result = SendMessage("Say OK", "Reply with only the word OK");
+            return result != null && result.Length > 0;
         }
 
-        private string TryGemini(string prompt, string systemInstruction)
+        private string BuildRequestJson(string prompt, string systemInstruction)
         {
-            if (!_gemini.IsAvailable)
-                return null;
+            string sys = string.IsNullOrEmpty(systemInstruction)
+                ? "You are a helpful assistant."
+                : systemInstruction;
 
-            if (_geminiFailCount >= MAX_FAIL_BEFORE_SKIP)
-            {
-                if (DateTime.Now - _lastGeminiFailTime < RETRY_WAIT)
-                    return null;
-                _geminiFailCount = 0;
-            }
-
-            string result = _gemini.SendMessage(prompt, systemInstruction);
-
-            if (result != null)
-            {
-                _geminiFailCount = 0;
-                _geminiAvailable = true;
-                LastUsedSource = "Gemini";
-                return result;
-            }
-
-            _geminiFailCount++;
-            _lastGeminiFailTime = DateTime.Now;
-            return null;
+            return "{\"model\":\"" + EscapeJson(_model) + "\","
+                 + "\"messages\":["
+                 + "{\"role\":\"system\",\"content\":\"" + EscapeJson(sys) + "\"},"
+                 + "{\"role\":\"user\",\"content\":\"" + EscapeJson(prompt) + "\"}"
+                 + "],"
+                 + "\"max_tokens\":4096,"
+                 + "\"temperature\":0.7}";
         }
 
-        private string TryDuckDuckGo(string prompt)
+        private string ParseResponse(string responseText)
         {
-            if (_ddgFailCount >= MAX_FAIL_BEFORE_SKIP)
-            {
-                if (DateTime.Now - _lastDdgFailTime < RETRY_WAIT)
-                    return null;
-                _ddgFailCount = 0;
-            }
+            if (string.IsNullOrEmpty(responseText)) return null;
 
-            string result = _ddgAi.SendMessage(prompt);
+            int choicesIdx = responseText.IndexOf("\"choices\"");
+            if (choicesIdx < 0) return null;
 
-            if (result != null)
-            {
-                _ddgFailCount = 0;
-                _ddgAvailable = true;
-                LastUsedSource = "DuckDuckGo AI";
-                return result;
-            }
+            int contentIdx = responseText.IndexOf("\"content\"", choicesIdx);
+            if (contentIdx < 0) return null;
 
-            _ddgFailCount++;
-            _lastDdgFailTime = DateTime.Now;
-            return null;
-        }
+            int colonIdx = responseText.IndexOf(":", contentIdx + 9);
+            if (colonIdx < 0) return null;
 
-        private string TryFreeProviders(string prompt, string systemInstruction)
-        {
-            foreach (var provider in _freeProviders)
-            {
-                // 跳過沒有 Key 的（LLM7 除外，它不需要 Key）
-                if (provider.ProviderName != "LLM7" &&
-                    !provider.IsAvailable)
-                    continue;
+            int startQuote = responseText.IndexOf("\"", colonIdx + 1);
+            if (startQuote < 0) return null;
 
-                try
-                {
-                    string result = provider.SendMessage(prompt, systemInstruction);
-                    if (!string.IsNullOrEmpty(result))
-                    {
-                        LastUsedSource = provider.ProviderName;
-                        return result;
-                    }
-                }
-                catch
-                {
-                    continue;
-                }
-            }
-            return null;
-        }
-
-        public string GetStatusSummary()
-        {
-            return string.Format(
-                "AI 狀態:\n" +
-                "  Gemini: {0} (失敗 {1} 次)\n" +
-                "  DuckDuckGo: {2} (失敗 {3} 次)\n" +
-                "  免費 Providers: {4} 個\n" +
-                "  偏好來源: {5}\n" +
-                "  最後使用: {6}",
-                _gemini.IsAvailable ? "已設定" : "未設定 Key",
-                _geminiFailCount,
-                _ddgAvailable ? "可用" : "不可用",
-                _ddgFailCount,
-                _freeProviders.Length,
-                _preferredSource,
-                LastUsedSource);
-        }
-
-        public void ResetFailCounts()
-        {
-            _geminiFailCount = 0;
-            _ddgFailCount = 0;
-        }
-
-        public string TestAllConnections()
-        {
+            startQuote++;
             StringBuilder sb = new StringBuilder();
+            bool escaped = false;
 
-            sb.Append("測試 Gemini API... ");
-            if (_gemini.IsAvailable)
+            for (int i = startQuote; i < responseText.Length; i++)
             {
-                bool ok = _gemini.TestConnection();
-                sb.AppendLine(ok ? "OK" : "FAILED");
-            }
-            else
-            {
-                sb.AppendLine("未設定 API Key");
-            }
-
-            sb.Append("測試 DuckDuckGo AI... ");
-            bool ddgOk = _ddgAi.TestConnection();
-            sb.AppendLine(ddgOk ? "OK" : "FAILED");
-
-            foreach (var provider in _freeProviders)
-            {
-                sb.Append("測試 " + provider.ProviderName + "... ");
-                try
+                char c = responseText[i];
+                if (escaped)
                 {
-                    bool ok = provider.TestConnection();
-                    sb.AppendLine(ok ? "OK" : "FAILED");
+                    switch (c)
+                    {
+                        case 'n': sb.Append('\n'); break;
+                        case 'r': sb.Append('\r'); break;
+                        case 't': sb.Append('\t'); break;
+                        case '"': sb.Append('"'); break;
+                        case '\\': sb.Append('\\'); break;
+                        case '/': sb.Append('/'); break;
+                        default: sb.Append('\\'); sb.Append(c); break;
+                    }
+                    escaped = false;
                 }
-                catch
-                {
-                    sb.AppendLine("FAILED");
-                }
+                else if (c == '\\') { escaped = true; }
+                else if (c == '"') { break; }
+                else { sb.Append(c); }
             }
 
-            return sb.ToString();
+            string result = sb.ToString().Trim();
+            return string.IsNullOrEmpty(result) ? null : result;
+        }
+
+        private string EscapeJson(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "";
+            return s.Replace("\\", "\\\\")
+                    .Replace("\"", "\\\"")
+                    .Replace("\n", "\\n")
+                    .Replace("\r", "\\r")
+                    .Replace("\t", "\\t");
         }
     }
 }
