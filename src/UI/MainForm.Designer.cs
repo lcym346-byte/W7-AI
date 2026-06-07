@@ -25,7 +25,8 @@ namespace AIAgentTool
         private TabPage tabCode;
 
         // \u804a\u5929\u5340
-        private Panel pnlChatInner;
+        private FlowLayoutPanel pnlChatInner;
+
 
         // \u8f38\u5165\u5340
         private Panel pnlInput;
@@ -158,10 +159,13 @@ namespace AIAgentTool
             tabChat = new TabPage("\u804a\u5929");
             tabChat.BackColor = Color.FromArgb(32, 32, 36);
 
-            pnlChatInner = new Panel();
+            pnlChatInner = new FlowLayoutPanel();
             pnlChatInner.Dock = DockStyle.Fill;
             pnlChatInner.AutoScroll = true;
+            pnlChatInner.FlowDirection = FlowDirection.TopDown;
+            pnlChatInner.WrapContents = false;
             pnlChatInner.BackColor = Color.FromArgb(32, 32, 36);
+
 
             pnlInput = new Panel();
             pnlInput.Dock = DockStyle.Bottom;
