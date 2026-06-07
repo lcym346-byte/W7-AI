@@ -74,67 +74,137 @@ namespace AIAgentTool.Services.Core
         /// 本地快速匹配常見指令
         /// </summary>
         private List<TaskStep> TryLocalPlan(string input)
-{
-    string lower = input.ToLower().Trim();
-
-    // ★ 程式碼生成匹配（最優先）
-    if (Regex.IsMatch(lower, @"(寫|製作|做|產生|生成|建立|create|make|write|build|code|程式|程式碼|app|軟體|工具)"))
-    {
-        if (Regex.IsMatch(lower, @"(程式|軟體|工具|計算機|鬧鐘|遊戲|app|視窗|介面|gui|winforms|放在|存到|儲存)"))
         {
-            List<TaskStep> plan = new List<TaskStep>();
-            TaskStep step = new TaskStep();
-            step.Step = 1;
-            step.Type = "generate_code";
-            step.Description = input;
-            step.Desc = "生成程式碼: " + input;
-            plan.Add(step);
-            return plan;
-        }
-    }
+            string lower = input.ToLower().Trim();
 
-            // 關閉程式
-            Match closeMatch = Regex.Match(lower,
-                @"^(關閉|結束|停止|close|kill|stop)\s*(.+)$");
-            if (closeMatch.Success)
+            // ★ 程式碼生成匹配（最優先，用 Contains 避免編碼問題）
+            bool wantCode = lower.Contains("write") || lower.Contains("make") ||
+                lower.Contains("create") || lower.Contains("build") || lower.Contains("code") ||
+                input.Contains("\u5beb") || input.Contains("\u88fd\u4f5c") ||
+                input.Contains("\u505a") || input.Contains("\u7522\u751f") ||
+                input.Contains("\u751f\u6210") || input.Contains("\u5efa\u7acb") ||
+                input.Contains("\u7a0b\u5f0f") || input.Contains("\u8edf\u9ad4") ||
+                input.Contains("\u5de5\u5177");
+
+            bool isCodeTarget = lower.Contains("app") || lower.Contains("gui") ||
+                lower.Contains("winforms") || lower.Contains("program") ||
+                input.Contains("\u7a0b\u5f0f") || input.Contains("\u8edf\u9ad4") ||
+                input.Contains("\u5de5\u5177") || input.Contains("\u8a08\u7b97\u6a5f") ||
+                input.Contains("\u9b27\u9418") || input.Contains("\u904a\u6232") ||
+                input.Contains("\u8996\u7a97") || input.Contains("\u4ecb\u9762") ||
+                input.Contains("\u653e\u5728") || input.Contains("\u5b58\u5230") ||
+                input.Contains("\u5132\u5b58");
+
+            if (wantCode && isCodeTarget)
             {
-                string target = closeMatch.Groups[2].Value.Trim();
                 List<TaskStep> plan = new List<TaskStep>();
                 TaskStep step = new TaskStep();
                 step.Step = 1;
-                step.Type = "close_app";
-                step.Target = target;
-                step.Desc = "關閉 " + target;
+                step.Type = "generate_code";
+                step.Description = input;
+                step.Desc = "generate code: " + input;
                 plan.Add(step);
                 return plan;
             }
 
+            // 開啟程式
+            if (lower.Contains("open") || lower.Contains("launch") || lower.Contains("start") ||
+                input.Contains("\u958b\u555f") || input.Contains("\u6253\u958b") ||
+                input.Contains("\u555f\u52d5") || input.Contains("\u57f7\u884c"))
+            {
+                string target = input;
+                string[] removePrefixes = new string[] {
+                    "\u958b\u555f", "\u6253\u958b", "\u555f\u52d5", "\u57f7\u884c",
+                    "open", "launch", "start"
+                };
+                foreach (string p in removePrefixes)
+                {
+                    int idx = target.IndexOf(p, StringComparison.OrdinalIgnoreCase);
+                    if (idx >= 0) target = target.Substring(idx + p.Length);
+                }
+                target = target.Trim();
+                if (target.Length > 0)
+                {
+                    List<TaskStep> plan = new List<TaskStep>();
+                    TaskStep step = new TaskStep();
+                    step.Step = 1;
+                    step.Type = "find_and_launch";
+                    step.Keyword = target;
+                    step.Desc = "launch " + target;
+                    plan.Add(step);
+                    return plan;
+                }
+            }
+
+            // 關閉程式
+            if (lower.Contains("close") || lower.Contains("kill") || lower.Contains("stop") ||
+                input.Contains("\u95dc\u9589") || input.Contains("\u7d50\u675f") ||
+                input.Contains("\u505c\u6b62"))
+            {
+                string target = input;
+                string[] removePrefixes = new string[] {
+                    "\u95dc\u9589", "\u7d50\u675f", "\u505c\u6b62",
+                    "close", "kill", "stop"
+                };
+                foreach (string p in removePrefixes)
+                {
+                    int idx = target.IndexOf(p, StringComparison.OrdinalIgnoreCase);
+                    if (idx >= 0) target = target.Substring(idx + p.Length);
+                }
+                target = target.Trim();
+                if (target.Length > 0)
+                {
+                    List<TaskStep> plan = new List<TaskStep>();
+                    TaskStep step = new TaskStep();
+                    step.Step = 1;
+                    step.Type = "close_app";
+                    step.Target = target;
+                    step.Desc = "close " + target;
+                    plan.Add(step);
+                    return plan;
+                }
+            }
+
             // 截圖
-            if (lower.Contains("截圖") || lower.Contains("screenshot"))
+            if (input.Contains("\u622a\u5716") || lower.Contains("screenshot") ||
+                lower.Contains("screen capture"))
             {
                 List<TaskStep> plan = new List<TaskStep>();
                 TaskStep step = new TaskStep();
                 step.Step = 1;
                 step.Type = "screenshot";
-                step.Desc = "擷取螢幕截圖";
+                step.Desc = "screen capture";
                 plan.Add(step);
                 return plan;
             }
 
             // 搜尋網路
-            Match searchMatch = Regex.Match(lower,
-                @"^(搜尋|搜索|search|找|查)\s*(.+)$");
-            if (searchMatch.Success && !lower.Contains("檔案") && !lower.Contains("file"))
+            if ((input.Contains("\u641c\u5c0b") || input.Contains("\u641c\u7d22") ||
+                 input.Contains("\u627e") || input.Contains("\u67e5") ||
+                 lower.Contains("search")) &&
+                !input.Contains("\u6a94\u6848") && !lower.Contains("file"))
             {
-                string query = searchMatch.Groups[2].Value.Trim();
-                List<TaskStep> plan = new List<TaskStep>();
-                TaskStep step = new TaskStep();
-                step.Step = 1;
-                step.Type = "search_web";
-                step.Query = query;
-                step.Desc = "搜尋: " + query;
-                plan.Add(step);
-                return plan;
+                string query = input;
+                string[] removePrefixes = new string[] {
+                    "\u641c\u5c0b", "\u641c\u7d22", "\u627e", "\u67e5", "search"
+                };
+                foreach (string p in removePrefixes)
+                {
+                    int idx = query.IndexOf(p, StringComparison.OrdinalIgnoreCase);
+                    if (idx >= 0) query = query.Substring(idx + p.Length);
+                }
+                query = query.Trim();
+                if (query.Length > 0)
+                {
+                    List<TaskStep> plan = new List<TaskStep>();
+                    TaskStep step = new TaskStep();
+                    step.Step = 1;
+                    step.Type = "search_web";
+                    step.Query = query;
+                    step.Desc = "search: " + query;
+                    plan.Add(step);
+                    return plan;
+                }
             }
 
             return null; // 無法本地匹配，交給 AI
@@ -149,8 +219,8 @@ namespace AIAgentTool.Services.Core
             TaskStep step = new TaskStep();
             step.Step = 1;
             step.Type = "message";
-            step.Text = "AI 服務不可用，無法分析您的指令。請嘗試更簡單的指令如「開啟記事本」「截圖」等。";
-            step.Desc = "AI 不可用";
+            step.Text = "AI \u670d\u52d9\u4e0d\u53ef\u7528\uff0c\u7121\u6cd5\u5206\u6790\u60a8\u7684\u6307\u4ee4\u3002\u8acb\u5617\u8a66\u66f4\u7c21\u55ae\u7684\u6307\u4ee4\u5982\u300c\u958b\u555f\u8a18\u4e8b\u672c\u300d\u300c\u622a\u5716\u300d\u7b49\u3002";
+            step.Desc = "AI unavailable";
             plan.Add(step);
             return plan;
         }
@@ -183,8 +253,8 @@ namespace AIAgentTool.Services.Core
                     TaskStep errStep = new TaskStep();
                     errStep.Step = 1;
                     errStep.Type = "message";
-                    errStep.Text = "AI 回覆格式錯誤，無法解析執行計畫。";
-                    errStep.Desc = "解析失敗";
+                    errStep.Text = "AI \u56de\u8986\u683c\u5f0f\u932f\u8aa4\uff0c\u7121\u6cd5\u89e3\u6790\u57f7\u884c\u8a08\u756b\u3002";
+                    errStep.Desc = "parse failed";
                     steps.Add(errStep);
                     return steps;
                 }
@@ -224,8 +294,8 @@ namespace AIAgentTool.Services.Core
                     TaskStep errStep = new TaskStep();
                     errStep.Step = 1;
                     errStep.Type = "message";
-                    errStep.Text = "AI 未產生任何執行步驟。";
-                    errStep.Desc = "空計畫";
+                    errStep.Text = "AI \u672a\u7522\u751f\u4efb\u4f55\u57f7\u884c\u6b65\u9a5f\u3002";
+                    errStep.Desc = "empty plan";
                     steps.Add(errStep);
                 }
             }
@@ -234,8 +304,8 @@ namespace AIAgentTool.Services.Core
                 TaskStep errStep = new TaskStep();
                 errStep.Step = 1;
                 errStep.Type = "message";
-                errStep.Text = "解析失敗: " + ex.Message;
-                errStep.Desc = "例外";
+                errStep.Text = "parse error: " + ex.Message;
+                errStep.Desc = "exception";
                 steps.Add(errStep);
             }
 
