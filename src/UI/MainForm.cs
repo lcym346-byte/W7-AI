@@ -630,7 +630,7 @@ namespace AIAgentTool
             trayIcon.Visible = false;
         }
 
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+                private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (_isExecuting)
             {
@@ -644,17 +644,11 @@ namespace AIAgentTool
                 }
             }
 
-            if (_settings.MinimizeToTray && e.CloseReason == CloseReason.UserClosing)
-            {
-                e.Cancel = true;
-                this.Hide();
-                trayIcon.Visible = true;
-                return;
-            }
-
+            // 真正關閉程式
             _taskRunner.Stop();
             trayIcon.Visible = false;
         }
+
 
         // =======================================================
         // \u5de5\u5177\u65b9\u6cd5
