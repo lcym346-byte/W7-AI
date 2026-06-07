@@ -127,7 +127,7 @@ namespace AIAgentTool
             progressBar.Value = 10;
             tabMain.SelectedTab = tabChat;
 
-            _taskRunner.ExecuteAsync(text, null, null);
+            string contextQuery = BuildContextQuery(text); _taskRunner.ExecuteAsync(contextQuery, null, null);
         }
 
         // =======================================================
@@ -627,8 +627,42 @@ namespace AIAgentTool
             return s.Replace("\\n", "\n").Replace("\\r", "\r")
                     .Replace("\\t", "\t").Replace("\\\"", "\"").Replace("\\\\", "\\");
         }
-    }
+   
+        /// <summary>
+        /// 組合對話歷史作為上下文，讓 AI 有記憶
+        /// </summary>
+        private string BuildContextQuery(string currentInput)
+        {
+            if (_currentSession == null || _currentSession.Messages.Count == 0)
+                return currentInput;
 
+            // 取最近的對話（最多 10 輪，避免太長）
+            List<ChatMessage> recent = _currentSession.Messages;
+            int startIndex = 0;
+            if (recent.Count > 20)
+                startIndex = recent.Count - 20;
+
+            StringBuilder context = new StringBuilder();
+            context.AppendLine("【以下是之前的對話記錄，請根據上下文理解使用者的最新指令】");
+            context.AppendLine("---");
+
+            for (int i = startIndex; i < recent.Count; i++)
+            {
+                ChatMessage msg = recent[i];
+                if (msg.Role == "user")
+                    context.AppendLine("使用者: " + Truncate(msg.Content, 300));
+                else
+                    context.AppendLine("助手: " + Truncate(msg.Content, 300));
+            }
+
+            context.AppendLine("---");
+            context.AppendLine("【使用者最新指令】" + currentInput);
+            context.AppendLine();
+            context.AppendLine("請根據上述對話脈絡執行使用者的最新指令。如果最新指令是延續前面的話題，請結合上下文理解。");
+
+            return context.ToString();
+        }
+}
     public class ChatSession
     {
         public string Id { get; set; }
