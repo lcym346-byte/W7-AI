@@ -41,6 +41,7 @@ C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe ^
   UI\MainForm.Designer.cs ^
   UI\SettingsForm.cs ^
   UI\SettingsForm.Designer.cs
+copy /Y AIAgentTool.exe.config AIAgentTool.exe.config >nul 2>&1
 
 echo.
 if %ERRORLEVEL%==0 (
