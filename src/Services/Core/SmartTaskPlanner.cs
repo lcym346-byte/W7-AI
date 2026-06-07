@@ -74,24 +74,24 @@ namespace AIAgentTool.Services.Core
         /// 本地快速匹配常見指令
         /// </summary>
         private List<TaskStep> TryLocalPlan(string input)
-        {
-            string lower = input.ToLower().Trim();
+{
+    string lower = input.ToLower().Trim();
 
-            // 開啟程式的簡單匹配
-            Match launchMatch = Regex.Match(lower,
-                @"^(開啟|打開|啟動|執行|open|launch|start)\s*(.+)$");
-            if (launchMatch.Success)
-            {
-                string target = launchMatch.Groups[2].Value.Trim();
-                List<TaskStep> plan = new List<TaskStep>();
-                TaskStep step = new TaskStep();
-                step.Step = 1;
-                step.Type = "find_and_launch";
-                step.Keyword = target;
-                step.Desc = "啟動 " + target;
-                plan.Add(step);
-                return plan;
-            }
+    // ★ 程式碼生成匹配（最優先）
+    if (Regex.IsMatch(lower, @"(寫|製作|做|產生|生成|建立|create|make|write|build|code|程式|程式碼|app|軟體|工具)"))
+    {
+        if (Regex.IsMatch(lower, @"(程式|軟體|工具|計算機|鬧鐘|遊戲|app|視窗|介面|gui|winforms|放在|存到|儲存)"))
+        {
+            List<TaskStep> plan = new List<TaskStep>();
+            TaskStep step = new TaskStep();
+            step.Step = 1;
+            step.Type = "generate_code";
+            step.Description = input;
+            step.Desc = "生成程式碼: " + input;
+            plan.Add(step);
+            return plan;
+        }
+    }
 
             // 關閉程式
             Match closeMatch = Regex.Match(lower,
