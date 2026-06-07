@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -77,12 +76,10 @@ namespace AIAgentTool.Services.AI
                     }
                 }
             }
-            catch (Exception ex)
-{
-    System.Windows.Forms.MessageBox.Show("DuckDuckGo AI 錯誤:\n" + ex.ToString(), "AI Debug");
-    return null;
-}
-
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         private bool ObtainVqdToken()
@@ -109,12 +106,10 @@ namespace AIAgentTool.Services.AI
                     return !string.IsNullOrEmpty(_vqd);
                 }
             }
-            catch (Exception ex)
-{
-    System.Windows.Forms.MessageBox.Show("VQD Token 錯誤:\n" + ex.ToString(), "VQD Debug");
-    return false;
-}
-
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private string BuildChatJson(string prompt)
