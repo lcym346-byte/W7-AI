@@ -41,6 +41,7 @@ namespace AIAgentTool.Services.CodeGen
 "17. \u7a0b\u5f0f\u78bc\u4e2d\u7684 class \u540d\u7a31\u5fc5\u9808\u53eb MainForm\uff0c\u7e7c\u627f Form\u3002\n" +
 "18. \u8a08\u6642\u5668/\u5012\u6578\u529f\u80fd\uff1a\u5982\u679c\u6709\u300c\u5206\u9418\u300d\u548c\u300c\u79d2\u300d\u5169\u500b\u8f38\u5165\u6846\uff0c\u7e3d\u79d2\u6578\u5fc5\u9808\u7528 (\u5206\u9418*60)+\u79d2 \u8a08\u7b97\u3002\u4e0d\u53ef\u5ffd\u7565\u5206\u9418\u6b04\u4f4d\u3002\u5012\u6578\u6642\u6bcf\u79d2\u905e\u6e1b\u7e3d\u79d2\u6578\uff0c\u986f\u793a\u683c\u5f0f\u7528 (totalSeconds/60) \u548c (totalSeconds%60) \u8f49\u63db\u70ba mm:ss\u3002\n" +
 "19. \u7576\u4f7f\u7528\u8005\u5831\u544a\u300c\u8f38\u5165\u5206\u9418\u6c92\u7528\u300d\u300c\u53ea\u80fd60\u79d2\u300d\u7b49\u554f\u984c\u6642\uff0c\u4ee3\u8868\u4f60\u7684\u7a0b\u5f0f\u6c92\u6709\u6b63\u78ba\u8b80\u53d6\u5206\u9418\u6b04\u7684\u6578\u5b57\uff0c\u8acb\u78ba\u4fdd int totalSeconds = (int.Parse(txtMin.Text) * 60) + int.Parse(txtSec.Text); \u9019\u6a23\u7684\u908f\u8f2f\u5b58\u5728\u3002";
+"20. Event handler MUST use delegate syntax: timer.Tick += delegate(object sender, EventArgs e) { code; }; NEVER use lambda syntax like (s,e) => { };";
         public CodeGeneratorService(AiRouter aiRouter)
         {
             _aiRouter = aiRouter;
@@ -117,7 +118,7 @@ namespace AIAgentTool.Services.CodeGen
         /// <summary>
         /// 請 AI 修正編譯錯誤
         /// </summary>
-        public string FixCompileErrors(string source, string errors)
+                public string FixCompileErrors(string source, string errors)
         {
             if (_aiRouter == null) return null;
 
@@ -125,7 +126,15 @@ namespace AIAgentTool.Services.CodeGen
                 "以下 C# 程式碼有編譯錯誤，請修正後回傳完整的正確程式碼：\n\n" +
                 "原始碼：\n```csharp\n{0}\n```\n\n" +
                 "編譯錯誤：\n{1}\n\n" +
-                "請只回傳修正後的完整程式碼，用 ```csharp 包裹。",
+                "修正規則（必須遵守）：\n" +
+                "- 目標平台是 .NET Framework 4.0 + C# 5（csc 4.6 編譯器）\n" +
+                "- 不可使用 string interpolation ($\"...\")\n" +
+                "- 不可使用 var 在匿名委派或 lambda 裡面\n" +
+                "- Timer.Tick 事件必須用 delegate(object s, EventArgs ev) {{ }} 語法，不可用 lambda (s,e) => {{}}\n" +
+                "- 匿名委派內部不可宣告與外部同名的變數\n" +
+                "- 所有區域變數必須在使用前宣告和賦值\n" +
+                "- 不可使用 InitializeComponent()\n" +
+                "- 請只回傳修正後的完整程式碼，用 ```csharp 包裹\n",
                 source, errors);
 
             string response = _aiRouter.SendMessage(prompt, SYSTEM_INSTRUCTION);
@@ -142,6 +151,7 @@ namespace AIAgentTool.Services.CodeGen
 
             return null;
         }
+
 
         /// <summary>
         /// 清理使用者描述
