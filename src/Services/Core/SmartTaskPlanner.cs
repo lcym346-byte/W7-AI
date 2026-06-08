@@ -53,22 +53,28 @@ namespace AIAgentTool.Services.Core
         /// <summary>
         /// 將自然語言指令轉為執行計畫
         /// </summary>
-        public List<TaskStep> PlanTask(string userInput)
+                public List<TaskStep> PlanTask(string userInput)
         {
-            // 先嘗試本地快速匹配（不需要 AI）
-            List<TaskStep> localPlan = TryLocalPlan(userInput);
+            // 從上下文中提取最新指令（如果有 [CURRENT] 標記）
+            string actualInput = userInput;
+            int currentTag = userInput.IndexOf("[CURRENT] ");
+            if (currentTag >= 0)
+                actualInput = userInput.Substring(currentTag + 10).Trim();
+
+            // 先用「實際指令」嘗試本地快速匹配
+            List<TaskStep> localPlan = TryLocalPlan(actualInput);
             if (localPlan != null) return localPlan;
 
-            // 使用 AI 規劃
+            // 使用 AI 規劃（傳完整上下文）
             string response = _ai.SendMessage(userInput, PLAN_PROMPT);
             if (string.IsNullOrEmpty(response))
             {
-                // AI 不可用，嘗試基本意圖分析
-                return FallbackPlan(userInput);
+                return FallbackPlan(actualInput);
             }
 
             return ParsePlanJson(response);
         }
+
 
         /// <summary>
         /// 本地快速匹配常見指令
