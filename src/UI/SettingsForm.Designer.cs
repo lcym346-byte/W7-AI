@@ -166,11 +166,17 @@ namespace AIAgentTool
             cboAiSource.BackColor = Color.FromArgb(50, 50, 55);
             cboAiSource.ForeColor = Color.White;
             cboAiSource.Items.AddRange(new object[] {
-                "Auto (Gemini->DuckDuckGo->Free->Offline)",
-                "Gemini Only",
-                "DuckDuckGo AI Only",
-                "Offline Only"
-            });
+    "Auto (Gemini->DuckDuckGo->Free->Offline)",
+    "Gemini Only",
+    "DuckDuckGo AI Only",
+    "Offline Only",
+    "LLM7 Only (No Key)",
+    "Groq Only",
+    "Mistral Only",
+    "OpenRouter Only",
+    "Agnes Only"
+});
+
             y += 30;
 
             lblAiStatus = new Label();
