@@ -81,6 +81,22 @@ namespace AIAgentTool.Services.AI
                 case AiSourceOption.Offline:
                     LastUsedSource = "Offline";
                     return null;
+                                    case AiSourceOption.LLM7Only:
+                    result = TrySpecificFreeProvider("LLM7", prompt, systemInstruction);
+                    break;
+                case AiSourceOption.GroqOnly:
+                    result = TrySpecificFreeProvider("Groq", prompt, systemInstruction);
+                    break;
+                case AiSourceOption.MistralOnly:
+                    result = TrySpecificFreeProvider("Mistral", prompt, systemInstruction);
+                    break;
+                case AiSourceOption.OpenRouterOnly:
+                    result = TrySpecificFreeProvider("OpenRouter", prompt, systemInstruction);
+                    break;
+                case AiSourceOption.AgnesOnly:
+                    result = TrySpecificFreeProvider("Agnes", prompt, systemInstruction);
+                    break;
+
                 case AiSourceOption.Auto:
                 default:
                     // Gemini 優先
@@ -247,4 +263,25 @@ namespace AIAgentTool.Services.AI
             return sb.ToString();
         }
     }
+            private string TrySpecificFreeProvider(string name, string prompt, string systemInstruction)
+        {
+            foreach (var provider in _freeProviders)
+            {
+                if (provider.ProviderName == name)
+                {
+                    try
+                    {
+                        string result = provider.SendMessage(prompt, systemInstruction);
+                        if (!string.IsNullOrEmpty(result))
+                        {
+                            LastUsedSource = provider.ProviderName;
+                            return result;
+                        }
+                    }
+                    catch { }
+                }
+            }
+            return null;
+        }
+
 }
