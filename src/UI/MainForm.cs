@@ -83,6 +83,8 @@ namespace AIAgentTool
 
             this.FormClosing += MainForm_FormClosing;
             this.Resize += MainForm_Resize;
+            pnlChatInner.Resize += delegate { if (!_isRendering) RenderChat(); };
+
         }
 
         // =======================================================
