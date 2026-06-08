@@ -7,12 +7,17 @@ namespace AIAgentTool.Models
     /// <summary>
     /// AI 來源選項
     /// </summary>
-    public enum AiSourceOption
+        public enum AiSourceOption
     {
         Auto,           // 自動選擇 (Gemini → DDG → Free → 離線)
         GeminiOnly,     // 僅 Gemini
         DuckDuckGoOnly, // 僅 DuckDuckGo AI
-        Offline         // 僅離線模板
+        Offline,        // 僅離線模板
+        LLM7Only,       // 僅 LLM7
+        GroqOnly,       // 僅 Groq
+        MistralOnly,    // 僅 Mistral
+        OpenRouterOnly, // 僅 OpenRouter
+        AgnesOnly       // 僅 Agnes
     }
 
     /// <summary>
