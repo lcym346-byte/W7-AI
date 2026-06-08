@@ -262,8 +262,7 @@ namespace AIAgentTool.Services.AI
 
             return sb.ToString();
         }
-    }
-            private string TrySpecificFreeProvider(string name, string prompt, string systemInstruction)
+        private string TrySpecificFreeProvider(string name, string prompt, string systemInstruction)
         {
             foreach (var provider in _freeProviders)
             {
@@ -283,5 +282,5 @@ namespace AIAgentTool.Services.AI
             }
             return null;
         }
-
+    }      
 }
