@@ -23,7 +23,6 @@ namespace AIAgentTool
         private List<ChatSession> _sessions;
         private ChatSession _currentSession;
         private string _sessionsDir;
-        private int _chatYOffset = 10;
         private bool _isRendering;
 
         public MainForm()
@@ -70,28 +69,24 @@ namespace AIAgentTool
             txtInput.KeyDown += TxtInput_KeyDown;
             lstSessions.SelectedIndexChanged += LstSessions_SelectedIndexChanged;
 
-            // \u7a0b\u5f0f\u78bc\u6309\u9215
             btnRunCode.Click += BtnRunCode_Click;
             btnSaveCode.Click += BtnSaveCode_Click;
             btnCopyCode.Click += BtnCopyCode_Click;
 
-            // \u5de6\u5074\u53f3\u9375
             sessionMenu.Items[0].Click += SessionMenu_Rename;
             sessionMenu.Items[1].Click += SessionMenu_Delete;
             sessionMenu.Items[3].Click += SessionMenu_ClearAll;
 
-            // \u6258\u76e4
             trayMenu.Items[0].Click += TrayMenu_Show;
             trayMenu.Items[2].Click += TrayMenu_Exit;
             trayIcon.DoubleClick += TrayIcon_DoubleClick;
 
             this.FormClosing += MainForm_FormClosing;
             this.Resize += MainForm_Resize;
-                        pnlChatInner.Resize += delegate             {                 if (!_isRendering)                     RenderChat();             };
         }
 
         // =======================================================
-        // \u50b3\u9001
+        // 傳送
         // =======================================================
         private void BtnSend_Click(object sender, EventArgs e) { SendMessage(); }
 
@@ -128,11 +123,12 @@ namespace AIAgentTool
             progressBar.Value = 10;
             tabMain.SelectedTab = tabChat;
 
-            string contextQuery = BuildContextQuery(text); _taskRunner.ExecuteAsync(contextQuery, null, null);
+            string contextQuery = BuildContextQuery(text);
+            _taskRunner.ExecuteAsync(contextQuery, null, null);
         }
 
         // =======================================================
-        // \u4efb\u52d9\u5b8c\u6210
+        // 任務完成
         // =======================================================
         private void TaskRunner_OnTaskCompleted(AgentTask task)
         {
@@ -145,7 +141,6 @@ namespace AIAgentTool
 
                 string reply = task.Result ?? "(\u7121\u56de\u61c9)";
 
-                // \u7a0b\u5f0f\u78bc\u64f7\u53d6
                 string extractedCode = HtmlHelper.ExtractCodeBlock(reply);
                 if (!string.IsNullOrEmpty(extractedCode))
                 {
@@ -194,7 +189,7 @@ namespace AIAgentTool
         }
 
         // =======================================================
-        // \u7a0b\u5f0f\u78bc\u6309\u9215
+        // 程式碼按鈕
         // =======================================================
         private void BtnRunCode_Click(object sender, EventArgs e)
         {
@@ -273,15 +268,13 @@ namespace AIAgentTool
         }
 
         // =======================================================
-        // \u804a\u5929\u6c23\u6ce1\u6846
+        // 聊天氣泡框
         // =======================================================
-                        private void RenderChat()
+        private void RenderChat()
         {
             _isRendering = true;
             pnlChatInner.SuspendLayout();
-            pnlChatInner.AutoScrollPosition = new Point(0, 0);
             pnlChatInner.Controls.Clear();
-            _chatYOffset = 10;
 
             if (_currentSession != null)
             {
@@ -289,58 +282,43 @@ namespace AIAgentTool
                     CreateBubbleControl(msg);
             }
 
-            // 在最底部放一個隱形 spacer 確保捲動範圍正確
-            Panel spacer = new Panel();
-            spacer.Location = new Point(0, _chatYOffset + 5);
-            spacer.Size = new Size(1, 1);
-            spacer.BackColor = pnlChatInner.BackColor;
-            pnlChatInner.Controls.Add(spacer);
-
-            pnlChatInner.ResumeLayout(false);
-            pnlChatInner.PerformLayout();
+            pnlChatInner.ResumeLayout(true);
             _isRendering = false;
 
-            // 延遲捲動到底部
-            System.Windows.Forms.Timer scrollTimer = new System.Windows.Forms.Timer();
-            scrollTimer.Interval = 50;
-            scrollTimer.Tick += delegate(object s, EventArgs ev)
+            System.Windows.Forms.Timer t = new System.Windows.Forms.Timer();
+            t.Interval = 60;
+            t.Tick += delegate(object s, EventArgs ev)
             {
-                scrollTimer.Stop();
-                scrollTimer.Dispose();
-                if (_chatYOffset > pnlChatInner.ClientSize.Height)
-                    pnlChatInner.AutoScrollPosition = new Point(0, _chatYOffset);
+                t.Stop(); t.Dispose();
+                pnlChatInner.AutoScrollPosition = new Point(0, pnlChatInner.DisplayRectangle.Height);
             };
-            scrollTimer.Start();
+            t.Start();
         }
 
         private void AddBubbleToUI(ChatMessage msg)
         {
             CreateBubbleControl(msg);
 
-            // 加 spacer 確保捲動正確
-            Panel spacer = new Panel();
-            spacer.Location = new Point(0, _chatYOffset + 5);
-            spacer.Size = new Size(1, 1);
-            spacer.BackColor = pnlChatInner.BackColor;
-            pnlChatInner.Controls.Add(spacer);
-
-            // 延遲捲動
-            System.Windows.Forms.Timer scrollTimer = new System.Windows.Forms.Timer();
-            scrollTimer.Interval = 50;
-            scrollTimer.Tick += delegate(object s, EventArgs ev)
+            System.Windows.Forms.Timer t = new System.Windows.Forms.Timer();
+            t.Interval = 60;
+            t.Tick += delegate(object s, EventArgs ev)
             {
-                scrollTimer.Stop();
-                scrollTimer.Dispose();
-                if (_chatYOffset > pnlChatInner.ClientSize.Height)
-                    pnlChatInner.AutoScrollPosition = new Point(0, _chatYOffset);
+                t.Stop(); t.Dispose();
+                pnlChatInner.AutoScrollPosition = new Point(0, pnlChatInner.DisplayRectangle.Height);
             };
-            scrollTimer.Start();
+            t.Start();
         }
 
         private void CreateBubbleControl(ChatMessage msg)
         {
-            int maxWidth = pnlChatInner.ClientSize.Width - 140;
-            if (maxWidth < 200) maxWidth = 200;
+            int panelWidth = pnlChatInner.ClientSize.Width - 30;
+            if (panelWidth < 300) panelWidth = 300;
+            int maxWidth = panelWidth - 80;
+
+            Panel row = new Panel();
+            row.Width = panelWidth;
+            row.BackColor = pnlChatInner.BackColor;
+            row.Margin = new Padding(3, 4, 3, 4);
 
             Label lbl = new Label();
             lbl.AutoSize = false;
@@ -372,13 +350,13 @@ namespace AIAgentTool
             {
                 lbl.BackColor = Color.FromArgb(0, 100, 180);
                 lbl.ForeColor = Color.White;
-                lbl.Location = new Point(pnlChatInner.ClientSize.Width - lbl.Width - 40, _chatYOffset);
+                lbl.Location = new Point(row.Width - lbl.Width - 10, 5);
             }
             else
             {
                 lbl.BackColor = Color.FromArgb(55, 55, 62);
                 lbl.ForeColor = Color.FromArgb(225, 225, 225);
-                lbl.Location = new Point(20, _chatYOffset);
+                lbl.Location = new Point(10, 5);
             }
 
             Label lblTime = new Label();
@@ -391,11 +369,13 @@ namespace AIAgentTool
             else
                 lblTime.Location = new Point(lbl.Left, lbl.Bottom + 2);
 
-            pnlChatInner.Controls.Add(lbl);
-            pnlChatInner.Controls.Add(lblTime);
-            _chatYOffset = lbl.Bottom + 28;
+            row.Height = lbl.Bottom + 25;
+            row.Controls.Add(lbl);
+            row.Controls.Add(lblTime);
+
+            pnlChatInner.Controls.Add(row);
         }
-     
+
         // =======================================================
         // Session
         // =======================================================
@@ -438,7 +418,7 @@ namespace AIAgentTool
         }
 
         // =======================================================
-        // \u5b58\u8b80 JSON
+        // 存讀 JSON
         // =======================================================
         private void SaveSession(ChatSession session)
         {
@@ -543,7 +523,7 @@ namespace AIAgentTool
         }
 
         // =======================================================
-        // \u53f3\u9375\u9078\u55ae
+        // 右鍵選單
         // =======================================================
         private void SessionMenu_Rename(object sender, EventArgs e)
         {
@@ -595,7 +575,7 @@ namespace AIAgentTool
         }
 
         // =======================================================
-        // \u8a2d\u5b9a / \u6258\u76e4 / \u95dc\u9589
+        // 設定 / 托盤 / 關閉
         // =======================================================
         private void BtnSettings_Click(object sender, EventArgs e)
         {
@@ -636,7 +616,7 @@ namespace AIAgentTool
         }
 
         // =======================================================
-        // \u5de5\u5177
+        // 工具
         // =======================================================
         private void SetStatus(string text) { lblStatus.Text = text; }
 
@@ -667,42 +647,36 @@ namespace AIAgentTool
             return s.Replace("\\n", "\n").Replace("\\r", "\r")
                     .Replace("\\t", "\t").Replace("\\\"", "\"").Replace("\\\\", "\\");
         }
-   
-        /// <summary>
-        /// 組合對話歷史作為上下文，讓 AI 有記憶
-        /// </summary>
+
         private string BuildContextQuery(string currentInput)
         {
             if (_currentSession == null || _currentSession.Messages.Count == 0)
                 return currentInput;
 
-            // 取最近的對話（最多 10 輪，避免太長）
             List<ChatMessage> recent = _currentSession.Messages;
             int startIndex = 0;
             if (recent.Count > 20)
                 startIndex = recent.Count - 20;
 
             StringBuilder context = new StringBuilder();
-            context.AppendLine("【以下是之前的對話記錄，請根據上下文理解使用者的最新指令】");
-            context.AppendLine("---");
+            context.AppendLine("[CONTEXT]");
 
             for (int i = startIndex; i < recent.Count; i++)
             {
                 ChatMessage msg = recent[i];
                 if (msg.Role == "user")
-                    context.AppendLine("使用者: " + Truncate(msg.Content, 300));
+                    context.AppendLine("USER: " + Truncate(msg.Content, 300));
                 else
-                    context.AppendLine("助手: " + Truncate(msg.Content, 300));
+                    context.AppendLine("AI: " + Truncate(msg.Content, 300));
             }
 
-            context.AppendLine("---");
-            context.AppendLine("【使用者最新指令】" + currentInput);
-            context.AppendLine();
-            context.AppendLine("請根據上述對話脈絡執行使用者的最新指令。如果最新指令是延續前面的話題，請結合上下文理解。");
+            context.AppendLine("[/CONTEXT]");
+            context.AppendLine("[CURRENT] " + currentInput);
 
             return context.ToString();
         }
-}
+    }
+
     public class ChatSession
     {
         public string Id { get; set; }
