@@ -360,6 +360,45 @@ namespace AIAgentTool.Services.Media
                 return m.Groups[1].Value.Replace("\\\"", "\"").Replace("\\\\", "\\");
             return null;
         }
+        /// <summary>
+        /// 取得文字的 embedding 向量（用於 TurboVec）
+        /// </summary>
+        public float[] GetEmbedding(string text, string model = "text-embedding-ada-002")
+        {
+            try
+            {
+                string url = _baseUrl + "/v1/embeddings";
+                string jsonBody = string.Format(
+                    "{{\"input\":\"{0}\",\"model\":\"{1}\"}}",
+                    EscapeJson(text), model);
+
+                string response = PostJson(url, jsonBody);
+                if (response == null) return null;
+
+                // 解析 embedding 陣列
+                int dataStart = response.IndexOf("\"embedding\"");
+                if (dataStart < 0) return null;
+                int arrStart = response.IndexOf("[", dataStart);
+                int arrEnd = response.IndexOf("]", arrStart);
+                if (arrStart < 0 || arrEnd < 0) return null;
+
+                string arrStr = response.Substring(arrStart + 1, arrEnd - arrStart - 1);
+                string[] parts = arrStr.Split(',');
+                float[] result = new float[parts.Length];
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    float val;
+                    if (float.TryParse(parts[i].Trim(), out val))
+                        result[i] = val;
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                LastError = ex.Message;
+                return null;
+            }
+        }
 
         private string EscapeJson(string s)
         {
