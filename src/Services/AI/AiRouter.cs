@@ -11,7 +11,6 @@ namespace AIAgentTool.Services.AI
         private readonly OpenAiCompatibleService[] _freeProviders;
         private readonly AiSourceOption _preferredSource;
 
-        // === 新增：本地 LLM ===
         private readonly OpenAiCompatibleService _localLlm;
         private readonly bool _useLocalLlm;
         private int _localLlmFailCount;
@@ -42,27 +41,24 @@ namespace AIAgentTool.Services.AI
             _ddgFailCount = 0;
             LastUsedSource = "None";
 
-            // === 新增：初始化本地 LLM ===
             _useLocalLlm = settings.UseLocalLlm;
             _localLlmFailCount = 0;
             _lastLocalLlmFailTime = DateTime.MinValue;
 
             if (_useLocalLlm && !string.IsNullOrEmpty(settings.LocalLlmUrl))
-{
-    _localLlm = new OpenAiCompatibleService(
-        "LocalLLM",
-        settings.LocalLlmUrl + "/v1",
-        "",
-        settings.LocalLlmModel);
-    _localLlm.SetTimeout(10000); // 本地 LLM 超時 10 秒（避免未啟動時卡太久）
-}
-
+            {
+                _localLlm = new OpenAiCompatibleService(
+                    "LocalLLM",
+                    settings.LocalLlmUrl + "/v1",
+                    "",
+                    settings.LocalLlmModel);
+                _localLlm.SetTimeout(10000);
+            }
             else
             {
                 _localLlm = null;
             }
 
-            // 初始化免費 OpenAI 相容 providers
             _freeProviders = new OpenAiCompatibleService[]
             {
                 new OpenAiCompatibleService("LLM7",
@@ -116,25 +112,41 @@ namespace AIAgentTool.Services.AI
                 case AiSourceOption.AgnesOnly:
                     result = TrySpecificFreeProvider("Agnes", prompt, systemInstruction);
                     break;
-
-                // === 新增：本地 LLM 專用模式 ===
                 case AiSourceOption.LocalLlmOnly:
                     result = TryLocalLlm(prompt, systemInstruction);
                     break;
 
                 case AiSourceOption.Auto:
                 default:
-                    // === 修改：本地 LLM 最優先 ===
-                    result = TryLocalLlm(prompt, systemInstruction);
-                    // Gemini 其次
-                    if (result == null)
+                    // === 智能路由：判斷任務類型決定用本地或線上 ===
+                    if (NeedsOnlineAi(prompt))
+                    {
+                        // 需要即時資料或複雜任務 → 線上優先
                         result = TryGemini(prompt, systemInstruction);
-                    // DuckDuckGo 第三
-                    if (result == null)
-                        result = TryDuckDuckGo(prompt);
-                    // 免費 providers 最後
-                    if (result == null)
-                        result = TryFreeProviders(prompt, systemInstruction);
+                        if (result == null)
+                            result = TryDuckDuckGo(prompt);
+                        if (result == null)
+                            result = TryFreeProviders(prompt, systemInstruction);
+                        // 線上全失敗 → 退回本地
+                        if (result == null)
+                            result = TryLocalLlm(prompt, systemInstruction);
+                    }
+                    else
+                    {
+                        // 一般任務 → 本地優先（節省流量）
+                        result = TryLocalLlm(prompt, systemInstruction);
+                        // 本地失敗或品質差 → 自動升級到線上
+                        if (result == null || IsLowQualityResponse(result))
+                        {
+                            string onlineResult = TryGemini(prompt, systemInstruction);
+                            if (onlineResult == null)
+                                onlineResult = TryDuckDuckGo(prompt);
+                            if (onlineResult == null)
+                                onlineResult = TryFreeProviders(prompt, systemInstruction);
+                            if (onlineResult != null)
+                                result = onlineResult;
+                        }
+                    }
                     break;
             }
 
@@ -154,7 +166,73 @@ namespace AIAgentTool.Services.AI
             return SendMessage(prompt, null);
         }
 
-        // === 新增：嘗試本地 LLM ===
+        /// <summary>
+        /// 判斷是否需要線上 AI（即時資料、搜尋、複雜任務）
+        /// </summary>
+        private bool NeedsOnlineAi(string prompt)
+        {
+            if (string.IsNullOrEmpty(prompt)) return false;
+            string lower = prompt.ToLower();
+
+            string[] onlineKeywords = new string[] {
+                "\u4eca\u5929", "\u73fe\u5728", "\u6700\u65b0", "\u65b0\u805e",
+                "\u5929\u6c23", "\u80a1\u50f9", "\u80a1\u7968", "\u532f\u7387",
+                "\u5373\u6642", "\u76ee\u524d", "\u641c\u5c0b", "\u67e5\u8a62",
+                "\u4e0a\u7db2", "today", "current", "latest", "news",
+                "weather", "search", "google", "find online",
+                "\u7db2\u8def", "\u7db2\u9801", "\u7db2\u7ad9", "url", "http"
+            };
+
+            for (int i = 0; i < onlineKeywords.Length; i++)
+            {
+                if (lower.Contains(onlineKeywords[i]))
+                    return true;
+            }
+
+            // 超長提示可能需要更強模型
+            if (prompt.Length > 500)
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// 判斷回答品質是否太差
+        /// </summary>
+        private bool IsLowQualityResponse(string response)
+        {
+            if (string.IsNullOrEmpty(response)) return true;
+
+            // 回答太短
+            if (response.Length < 10)
+            {
+                string lower = response.ToLower().Trim();
+                if (lower == "ok" || lower == "\u597d" || lower == "\u662f" || lower == "no")
+                    return false;
+                return true;
+            }
+
+            // 明顯的無法回答
+            if (response.Contains("\u6211\u7121\u6cd5") ||
+                response.Contains("\u6211\u4e0d\u80fd") ||
+                response.Contains("\u6211\u6c92\u6709\u8fa6\u6cd5"))
+                return true;
+
+            // 全是重複字元
+            if (response.Length > 20)
+            {
+                char first = response[0];
+                bool allSame = true;
+                for (int i = 1; i < response.Length && i < 50; i++)
+                {
+                    if (response[i] != first) { allSame = false; break; }
+                }
+                if (allSame) return true;
+            }
+
+            return false;
+        }
+
         private string TryLocalLlm(string prompt, string systemInstruction)
         {
             if (_localLlm == null || !_useLocalLlm)
@@ -177,10 +255,7 @@ namespace AIAgentTool.Services.AI
                     return result;
                 }
             }
-            catch
-            {
-                // 本地 LLM 未啟動或連線失敗
-            }
+            catch { }
 
             _localLlmFailCount++;
             _lastLocalLlmFailTime = DateTime.Now;
@@ -266,17 +341,17 @@ namespace AIAgentTool.Services.AI
         public string GetStatusSummary()
         {
             return string.Format(
-                "AI 狀態:\n" +
-                "  本地 LLM: {0}\n" +
-                "  Gemini: {1} (失敗 {2} 次)\n" +
-                "  DuckDuckGo: {3} (失敗 {4} 次)\n" +
-                "  免費 Providers: {5} 個\n" +
-                "  偏好來源: {6}\n" +
-                "  最後使用: {7}",
-                _localLlm != null ? "已啟用 (失敗 " + _localLlmFailCount + " 次)" : "未啟用",
-                _gemini.IsAvailable ? "已設定" : "未設定 Key",
+                "AI \u72c0\u614b:\n" +
+                "  \u672c\u5730 LLM: {0}\n" +
+                "  Gemini: {1} (\u5931\u6557 {2} \u6b21)\n" +
+                "  DuckDuckGo: {3} (\u5931\u6557 {4} \u6b21)\n" +
+                "  \u514d\u8cbb Providers: {5} \u500b\n" +
+                "  \u504f\u597d\u4f86\u6e90: {6}\n" +
+                "  \u6700\u5f8c\u4f7f\u7528: {7}",
+                _localLlm != null ? "\u5df2\u555f\u7528 (\u5931\u6557 " + _localLlmFailCount + " \u6b21)" : "\u672a\u555f\u7528",
+                _gemini.IsAvailable ? "\u5df2\u8a2d\u5b9a" : "\u672a\u8a2d\u5b9a Key",
                 _geminiFailCount,
-                _ddgAvailable ? "可用" : "不可用",
+                _ddgAvailable ? "\u53ef\u7528" : "\u4e0d\u53ef\u7528",
                 _ddgFailCount,
                 _freeProviders.Length,
                 _preferredSource,
@@ -294,26 +369,25 @@ namespace AIAgentTool.Services.AI
         {
             StringBuilder sb = new StringBuilder();
 
-            // === 新增：測試本地 LLM ===
-            sb.Append("測試本地 LLM (KoboldCpp)... ");
+            sb.Append("\u6e2c\u8a66\u672c\u5730 LLM (KoboldCpp)... ");
             if (_localLlm != null && _useLocalLlm)
             {
                 try
                 {
                     bool ok = _localLlm.TestConnection();
-                    sb.AppendLine(ok ? "OK" : "FAILED (請確認 KoboldCpp 是否已啟動)");
+                    sb.AppendLine(ok ? "OK" : "FAILED (\u8acb\u78ba\u8a8d KoboldCpp \u662f\u5426\u5df2\u555f\u52d5)");
                 }
                 catch
                 {
-                    sb.AppendLine("FAILED (無法連線)");
+                    sb.AppendLine("FAILED (\u7121\u6cd5\u9023\u7dda)");
                 }
             }
             else
             {
-                sb.AppendLine("未啟用");
+                sb.AppendLine("\u672a\u555f\u7528");
             }
 
-            sb.Append("測試 Gemini API... ");
+            sb.Append("\u6e2c\u8a66 Gemini API... ");
             if (_gemini.IsAvailable)
             {
                 bool ok = _gemini.TestConnection();
@@ -321,16 +395,16 @@ namespace AIAgentTool.Services.AI
             }
             else
             {
-                sb.AppendLine("未設定 API Key");
+                sb.AppendLine("\u672a\u8a2d\u5b9a API Key");
             }
 
-            sb.Append("測試 DuckDuckGo AI... ");
+            sb.Append("\u6e2c\u8a66 DuckDuckGo AI... ");
             bool ddgOk = _ddgAi.TestConnection();
             sb.AppendLine(ddgOk ? "OK" : "FAILED");
 
             foreach (var provider in _freeProviders)
             {
-                sb.Append("測試 " + provider.ProviderName + "... ");
+                sb.Append("\u6e2c\u8a66 " + provider.ProviderName + "... ");
                 try
                 {
                     bool ok = provider.TestConnection();
