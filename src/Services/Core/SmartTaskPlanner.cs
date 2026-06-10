@@ -75,6 +75,80 @@ namespace AIAgentTool.Services.Core
             return ParsePlanJson(response);
         }
 
+            string lower = userInput.ToLower();
+
+            // ★ 圖片生成
+            if (lower.Contains("生成圖") || lower.Contains("畫一") ||
+                lower.Contains("產生圖") || lower.Contains("generate image") ||
+                lower.Contains("畫個") || lower.Contains("畫張"))
+            {
+                List<TaskStep> steps = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "generate_image";
+                step.Desc = userInput;
+                step.Text = userInput;
+                steps.Add(step);
+                return steps;
+            }
+
+            // ★ 影片生成
+            if (lower.Contains("生成影片") || lower.Contains("做影片") ||
+                lower.Contains("製作影片") || lower.Contains("generate video") ||
+                lower.Contains("做一段影片") || lower.Contains("短影片"))
+            {
+                List<TaskStep> steps = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "generate_video";
+                step.Desc = userInput;
+                step.Text = userInput;
+                steps.Add(step);
+                return steps;
+            }
+
+            // ★ 語音合成
+            if (lower.Contains("朗讀") || lower.Contains("唸出") ||
+                lower.Contains("語音") || lower.Contains("tts") ||
+                lower.Contains("說出來"))
+            {
+                List<TaskStep> steps = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "text_to_speech";
+                step.Desc = userInput;
+                step.Text = userInput;
+                steps.Add(step);
+                return steps;
+            }
+
+            // ★ 知識庫搜尋
+            if (lower.Contains("知識庫") || lower.Contains("搜尋文件") ||
+                lower.Contains("search knowledge") || lower.Contains("查資料"))
+            {
+                List<TaskStep> steps = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "knowledge_search";
+                step.Desc = userInput;
+                step.Text = userInput;
+                steps.Add(step);
+                return steps;
+            }
+
+            // ★ 加入文件到知識庫
+            if (lower.Contains("加入知識庫") || lower.Contains("匯入文件") ||
+                lower.Contains("add to knowledge"))
+            {
+                List<TaskStep> steps = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "knowledge_add";
+                step.Desc = userInput;
+                step.Text = userInput;
+                steps.Add(step);
+                return steps;
+            }
 
         /// <summary>
         /// 本地快速匹配常見指令
