@@ -12,6 +12,7 @@ namespace AIAgentTool.Services.AI
         private readonly string _apiKey;
         private readonly string _model;
         private readonly string _providerName;
+        private int _timeoutMs;
 
         public string ProviderName { get { return _providerName; } }
         public bool IsAvailable { get { return true; } }
@@ -22,6 +23,15 @@ namespace AIAgentTool.Services.AI
             _baseUrl = baseUrl.TrimEnd('/');
             _apiKey = apiKey ?? "";
             _model = model;
+            _timeoutMs = 30000; // 預設 30 秒
+        }
+
+        /// <summary>
+        /// 設定超時時間（毫秒）
+        /// </summary>
+        public void SetTimeout(int timeoutMs)
+        {
+            _timeoutMs = timeoutMs;
         }
 
         public string SendMessage(string prompt, string systemInstruction)
@@ -32,8 +42,8 @@ namespace AIAgentTool.Services.AI
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = "POST";
                 request.ContentType = "application/json; charset=utf-8";
-                request.Timeout = 60000;
-                request.ReadWriteTimeout = 60000;
+                request.Timeout = _timeoutMs;
+                request.ReadWriteTimeout = _timeoutMs;
                 request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64)";
 
                 if (!string.IsNullOrEmpty(_apiKey))
@@ -70,8 +80,18 @@ namespace AIAgentTool.Services.AI
 
         public bool TestConnection()
         {
-            string result = SendMessage("Say OK", "Reply with only the word OK");
-            return result != null && result.Length > 0;
+            // 測試時使用較短超時
+            int originalTimeout = _timeoutMs;
+            _timeoutMs = 8000; // 測試用 8 秒
+            try
+            {
+                string result = SendMessage("Say OK", "Reply with only the word OK");
+                return result != null && result.Length > 0;
+            }
+            finally
+            {
+                _timeoutMs = originalTimeout;
+            }
         }
 
         private string BuildRequestJson(string prompt, string systemInstruction)
