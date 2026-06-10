@@ -18,45 +18,23 @@ namespace AIAgentTool.Utils
         {
             if (string.IsNullOrEmpty(html)) return "";
 
-            // 移除 script 和 style 區塊
             string result = Regex.Replace(html,
                 @"<script[^>]*>[\s\S]*?</script>", "", RegexOptions.IgnoreCase);
             result = Regex.Replace(result,
                 @"<style[^>]*>[\s\S]*?</style>", "", RegexOptions.IgnoreCase);
 
-            // 將 <br>, <p>, <div> 轉為換行
             result = Regex.Replace(result,
                 @"<br\s*/?>", "\n", RegexOptions.IgnoreCase);
             result = Regex.Replace(result,
                 @"</(p|div|h[1-6]|li|tr)>", "\n", RegexOptions.IgnoreCase);
 
-            // 移除所有其他 HTML 標籤
             result = Regex.Replace(result, @"<[^>]+>", "");
-
-            // 解碼 HTML 實體
             result = WebUtility.HtmlDecode(result);
 
-            // 清理多餘空白
             result = Regex.Replace(result, @"[ \t]+", " ");
             result = Regex.Replace(result, @"\n\s*\n\s*\n", "\n\n");
 
             return result.Trim();
-            /// <summary>
-/// 將 \uXXXX 格式的 Unicode 轉義還原為實際字元
-/// 例如 \u003c → <, \u003e → >, \u0026 → &
-/// </summary>
-private static string UnescapeUnicode(string text)
-{
-    if (string.IsNullOrEmpty(text)) return text;
-    if (!text.Contains("\\u")) return text;
-
-    return Regex.Replace(text, @"\\u([0-9a-fA-F]{4})", delegate(Match m)
-    {
-        int code = Convert.ToInt32(m.Groups[1].Value, 16);
-        return ((char)code).ToString();
-    });
-}
-
         }
 
         /// <summary>
@@ -131,23 +109,21 @@ private static string UnescapeUnicode(string text)
         {
             if (string.IsNullOrEmpty(json)) return "";
 
-            // 匹配 "key": "value"
             string pattern = string.Format(
                 @"""{0}""\s*:\s*""((?:[^""\\]|\\.)*)""", Regex.Escape(key));
             var match = Regex.Match(json, pattern);
 
             if (match.Success)
-{
-    string raw = match.Groups[1].Value;
-    raw = UnescapeUnicode(raw);
-    raw = raw.Replace("\\\"", "\"")
-             .Replace("\\n", "\n")
-             .Replace("\\r", "\r")
-             .Replace("\\t", "\t")
-             .Replace("\\\\", "\\");
-    return raw;
-}
-
+            {
+                string raw = match.Groups[1].Value;
+                raw = UnescapeUnicode(raw);
+                raw = raw.Replace("\\\"", "\"")
+                         .Replace("\\n", "\n")
+                         .Replace("\\r", "\r")
+                         .Replace("\\t", "\t")
+                         .Replace("\\\\", "\\");
+                return raw;
+            }
 
             // 嘗試非字串值 (number, bool, null)
             pattern = string.Format(
@@ -177,7 +153,6 @@ private static string UnescapeUnicode(string text)
             var objects = new List<string>();
             if (string.IsNullOrEmpty(json)) return objects;
 
-            // 找到陣列內容
             string pattern = string.Format(
                 @"""{0}""\s*:\s*\[([\s\S]*?)\]", Regex.Escape(arrayKey));
             var match = Regex.Match(json, pattern);
@@ -247,16 +222,32 @@ private static string UnescapeUnicode(string text)
                 RegexOptions.IgnoreCase);
 
             if (match.Success)
-    return UnescapeUnicode(match.Groups[1].Value.Trim());
+                return UnescapeUnicode(match.Groups[1].Value.Trim());
 
             // 如果沒有 code block，檢查是否整段都是程式碼
             if (text.Contains("using System") || text.Contains("namespace ") ||
-    text.Contains("class ") || text.Contains("static void Main"))
-{
-    return UnescapeUnicode(text.Trim());
-}
+                text.Contains("class ") || text.Contains("static void Main"))
+            {
+                return UnescapeUnicode(text.Trim());
+            }
 
             return "";
+        }
+
+        /// <summary>
+        /// 將 \uXXXX 格式的 Unicode 轉義還原為實際字元
+        /// 例如 \u003c 還原為 <, \u003e 還原為 >, \u0026 還原為 &
+        /// </summary>
+        private static string UnescapeUnicode(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            if (!text.Contains("\\u")) return text;
+
+            return Regex.Replace(text, @"\\u([0-9a-fA-F]{4})", delegate(Match m)
+            {
+                int code = Convert.ToInt32(m.Groups[1].Value, 16);
+                return ((char)code).ToString();
+            });
         }
     }
 }
