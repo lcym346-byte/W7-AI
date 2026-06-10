@@ -22,6 +22,12 @@ namespace AIAgentTool
             txtGroqKey.Text = _settings.GroqApiKey ?? "";
             txtMistralKey.Text = _settings.MistralApiKey ?? "";
             txtOpenRouterKey.Text = _settings.OpenRouterApiKey ?? "";
+            txtAgnesKey.Text = _settings.AgnesApiKey ?? "";
+
+            // 本地 LLM
+            chkUseLocalLlm.Checked = _settings.UseLocalLlm;
+            txtLocalLlmUrl.Text = _settings.LocalLlmUrl ?? "http://127.0.0.1:5001";
+
             cboAiSource.SelectedIndex = (int)_settings.AiSource;
 
             cboSafetyLevel.SelectedIndex = (int)_settings.Safety;
@@ -56,6 +62,9 @@ namespace AIAgentTool
                 testSettings.GroqApiKey = txtGroqKey.Text.Trim();
                 testSettings.MistralApiKey = txtMistralKey.Text.Trim();
                 testSettings.OpenRouterApiKey = txtOpenRouterKey.Text.Trim();
+                testSettings.AgnesApiKey = txtAgnesKey.Text.Trim();
+                testSettings.UseLocalLlm = chkUseLocalLlm.Checked;
+                testSettings.LocalLlmUrl = txtLocalLlmUrl.Text.Trim();
                 testSettings.AiSource = AiSourceOption.Auto;
 
                 Services.AI.AiRouter testRouter = new Services.AI.AiRouter(testSettings);
@@ -96,7 +105,12 @@ namespace AIAgentTool
             if (sourceIdx == 0)
             {
                 lblAiStatus.ForeColor = System.Drawing.Color.FromArgb(150, 200, 255);
-                lblAiStatus.Text = "\u81ea\u52d5: Gemini -> DuckDuckGo -> Groq/Mistral/OpenRouter/LLM7 -> \u96e2\u7dda";
+                lblAiStatus.Text = "\u81ea\u52d5: LocalLLM -> Gemini -> DuckDuckGo -> Free -> \u96e2\u7dda";
+            }
+            else if (sourceIdx == 9)
+            {
+                lblAiStatus.ForeColor = System.Drawing.Color.FromArgb(255, 200, 100);
+                lblAiStatus.Text = "\u50c5\u672c\u5730 LLM (\u8acb\u78ba\u8a8d KoboldCpp \u5df2\u555f\u52d5)";
             }
             else if (sourceIdx == 1 && string.IsNullOrEmpty(key))
             {
@@ -131,6 +145,9 @@ namespace AIAgentTool
             _settings.GroqApiKey = txtGroqKey.Text.Trim();
             _settings.MistralApiKey = txtMistralKey.Text.Trim();
             _settings.OpenRouterApiKey = txtOpenRouterKey.Text.Trim();
+            _settings.AgnesApiKey = txtAgnesKey.Text.Trim();
+            _settings.UseLocalLlm = chkUseLocalLlm.Checked;
+            _settings.LocalLlmUrl = txtLocalLlmUrl.Text.Trim();
             _settings.AiSource = (AiSourceOption)cboAiSource.SelectedIndex;
             _settings.Safety = (SafetyLevel)cboSafetyLevel.SelectedIndex;
             _settings.DefaultSavePath = txtSavePath.Text.Trim();
