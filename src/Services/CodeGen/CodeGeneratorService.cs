@@ -43,7 +43,7 @@ namespace AIAgentTool.Services.CodeGen
     "19. 當使用者報告「輸入分鐘沒用」「只能60秒」等問題時，代表你的程式沒有正確讀取分鐘欄的數字，請確保 int totalSeconds = (int.Parse(txtMin.Text) * 60) + int.Parse(txtSec.Text); 這樣的邏輯存在。\n" +
     "20. Event handlers must use the delegate keyword. NEVER use arrow => lambda syntax. Correct: timer.Tick += delegate(object sender, EventArgs e) { ... }; Wrong: timer.Tick += (s,e) => { ... };\n" +
     "21. 【C# 版本限制 - 極重要】編譯器為 .NET 4.0 的 csc（等同 C# 5.0），以下語法全部禁止使用：\n" +
-    "22. 【修復模式】當使用者提供現有程式碼並要求修復時，必須在原有程式碼的基礎上修改，不可以重新寫一個全新的程式。只修改使用者指出的問題點，其餘程式碼保持不變。\n";
+    "22. 【修復模式】當使用者提供現有程式碼並要求修復時，必須在原有程式碼的基礎上修改，不可以重新寫一個全新的程式。只修改使用者指出的問題點，其餘程式碼保持不變。\n";+
     "    - 禁止 pattern matching：不可寫 'if (x is Type y)'，必須改為 'Type y = x as Type; if (y != null)'\n" +
     "    - 禁止 string interpolation：不可寫 '$\"...\"'，必須改為 string.Format()\n" +
     "    - 禁止 null conditional operator：不可寫 'x?.Method()'，必須改為 'if (x != null) x.Method()'\n" +
