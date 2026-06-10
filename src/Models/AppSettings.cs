@@ -4,38 +4,28 @@ using System.Text.RegularExpressions;
 
 namespace AIAgentTool.Models
 {
-    /// <summary>
-    /// AI 來源選項
-    /// </summary>
-        public enum AiSourceOption
+    public enum AiSourceOption
     {
-        Auto,           // 自動選擇 (Gemini → DDG → Free → 離線)
-        GeminiOnly,     // 僅 Gemini
-        DuckDuckGoOnly, // 僅 DuckDuckGo AI
-        Offline,        // 僅離線模板
-        LLM7Only,       // 僅 LLM7
-        GroqOnly,       // 僅 Groq
-        MistralOnly,    // 僅 Mistral
-        OpenRouterOnly, // 僅 OpenRouter
-        AgnesOnly       // 僅 Agnes
+        Auto,
+        GeminiOnly,
+        DuckDuckGoOnly,
+        Offline,
+        LLM7Only,
+        GroqOnly,
+        MistralOnly,
+        OpenRouterOnly,
+        AgnesOnly
     }
 
-    /// <summary>
-    /// 安全等級
-    /// </summary>
     public enum SafetyLevel
     {
-        Strict,   // 嚴格：僅白名單 CMD，所有操作確認
-        Medium,   // 中等：白名單 + 安全管道，程式碼確認
-        Relaxed   // 寬鬆：除黑名單外都允許
+        Strict,
+        Medium,
+        Relaxed
     }
 
-    /// <summary>
-    /// 應用程式設定 — 讀寫 JSON 設定檔
-    /// </summary>
     public class AppSettings
     {
-        // 設定值
         public string GeminiApiKey { get; set; }
         public string GroqApiKey { get; set; }
         public string MistralApiKey { get; set; }
@@ -50,8 +40,6 @@ namespace AIAgentTool.Models
         public string TurboVecUrl { get; set; }
         public string VideoApiUrl { get; set; }
 
-
-        // 設定檔路徑
         private static readonly string SettingsFilePath = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory, "settings.json");
 
@@ -61,53 +49,39 @@ namespace AIAgentTool.Models
             GroqApiKey = "";
             MistralApiKey = "";
             OpenRouterApiKey = "";
+            AgnesApiKey = "";
             AiSource = AiSourceOption.Auto;
             Safety = SafetyLevel.Medium;
-            DefaultSavePath = Environment.GetFolderPath(
-            Environment.SpecialFolder.Desktop);
+            DefaultSavePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             MinimizeToTray = true;
             ShowBalloonNotify = true;
-             LocalAiUrl = "http://localhost:8080";
+            LocalAiUrl = "http://localhost:8080";
             TurboVecUrl = "http://localhost:5050";
             VideoApiUrl = "http://localhost:8501";
-
         }
 
-        /// <summary>
-        /// 儲存設定到 JSON 檔
-        /// </summary>
         public void Save()
         {
             try
             {
-                string json = string.Format(
-                    "{{\n" +
-                    "  \"GeminiApiKey\": \"{0}\",\n" +
-                    "  \"GroqApiKey\": \"{1}\",\n" +
-                    "  \"MistralApiKey\": \"{2}\",\n" +
-                    "  \"OpenRouterApiKey\": \"{3}\",\n" +
-                    "  \"AiSource\": \"{4}\",\n" +
-                    "  \"Safety\": \"{5}\",\n" +
-                    "  \"DefaultSavePath\": \"{6}\",\n" +
-                    "  \"MinimizeToTray\": {7},\n" +
-                    "  \"ShowBalloonNotify\": {8}\n" +
-                    "  \"ShowBalloonNotify\": {8},\n" +
-                    "  \"LocalAiUrl\": \"{9}\",\n" +
-                    "  \"TurboVecUrl\": \"{10}\",\n" +
-                    "  \"VideoApiUrl\": \"{11}\"\n" +
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("{");
+                sb.AppendLine("  \"GeminiApiKey\": \"" + EscapeJsonString(GeminiApiKey) + "\",");
+                sb.AppendLine("  \"GroqApiKey\": \"" + EscapeJsonString(GroqApiKey) + "\",");
+                sb.AppendLine("  \"MistralApiKey\": \"" + EscapeJsonString(MistralApiKey) + "\",");
+                sb.AppendLine("  \"OpenRouterApiKey\": \"" + EscapeJsonString(OpenRouterApiKey) + "\",");
+                sb.AppendLine("  \"AgnesApiKey\": \"" + EscapeJsonString(AgnesApiKey) + "\",");
+                sb.AppendLine("  \"AiSource\": \"" + AiSource.ToString() + "\",");
+                sb.AppendLine("  \"Safety\": \"" + Safety.ToString() + "\",");
+                sb.AppendLine("  \"DefaultSavePath\": \"" + EscapeJsonString(DefaultSavePath) + "\",");
+                sb.AppendLine("  \"MinimizeToTray\": " + MinimizeToTray.ToString().ToLower() + ",");
+                sb.AppendLine("  \"ShowBalloonNotify\": " + ShowBalloonNotify.ToString().ToLower() + ",");
+                sb.AppendLine("  \"LocalAiUrl\": \"" + EscapeJsonString(LocalAiUrl) + "\",");
+                sb.AppendLine("  \"TurboVecUrl\": \"" + EscapeJsonString(TurboVecUrl) + "\",");
+                sb.AppendLine("  \"VideoApiUrl\": \"" + EscapeJsonString(VideoApiUrl) + "\"");
+                sb.AppendLine("}");
 
-                    "}}",
-                    EscapeJsonString(GeminiApiKey),
-                    EscapeJsonString(GroqApiKey),
-                    EscapeJsonString(MistralApiKey),
-                    EscapeJsonString(OpenRouterApiKey),
-                    AiSource.ToString(),
-                    Safety.ToString(),
-                    EscapeJsonString(DefaultSavePath),
-                    MinimizeToTray.ToString().ToLower(),
-                    ShowBalloonNotify.ToString().ToLower());
-
-                File.WriteAllText(SettingsFilePath, json);
+                File.WriteAllText(SettingsFilePath, sb.ToString());
             }
             catch (Exception ex)
             {
@@ -115,9 +89,6 @@ namespace AIAgentTool.Models
             }
         }
 
-        /// <summary>
-        /// 從 JSON 檔載入設定
-        /// </summary>
         public static AppSettings Load()
         {
             var settings = new AppSettings();
@@ -129,35 +100,36 @@ namespace AIAgentTool.Models
 
                 string json = File.ReadAllText(SettingsFilePath);
 
-                // 手動解析 JSON (不依賴外部套件)
                 settings.GeminiApiKey = ExtractJsonStringValue(json, "GeminiApiKey");
                 settings.GroqApiKey = ExtractJsonStringValue(json, "GroqApiKey");
                 settings.MistralApiKey = ExtractJsonStringValue(json, "MistralApiKey");
                 settings.OpenRouterApiKey = ExtractJsonStringValue(json, "OpenRouterApiKey");
-                settings.DefaultSavePath = ExtractJsonStringValue(json, "DefaultSavePath");
                 settings.AgnesApiKey = ExtractJsonStringValue(json, "AgnesApiKey");
-                string aiSource = ExtractJsonStringValue(json, "AiSource");
+                settings.DefaultSavePath = ExtractJsonStringValue(json, "DefaultSavePath");
+
                 settings.LocalAiUrl = ExtractJsonStringValue(json, "LocalAiUrl");
                 if (string.IsNullOrEmpty(settings.LocalAiUrl))
-                settings.LocalAiUrl = "http://localhost:8080";
+                    settings.LocalAiUrl = "http://localhost:8080";
+
                 settings.TurboVecUrl = ExtractJsonStringValue(json, "TurboVecUrl");
                 if (string.IsNullOrEmpty(settings.TurboVecUrl))
-                settings.TurboVecUrl = "http://localhost:5050";
+                    settings.TurboVecUrl = "http://localhost:5050";
+
                 settings.VideoApiUrl = ExtractJsonStringValue(json, "VideoApiUrl");
                 if (string.IsNullOrEmpty(settings.VideoApiUrl))
-                settings.VideoApiUrl = "http://localhost:8501";
+                    settings.VideoApiUrl = "http://localhost:8501";
+
+                string aiSource = ExtractJsonStringValue(json, "AiSource");
                 if (!string.IsNullOrEmpty(aiSource))
                 {
-                    try { settings.AiSource = (AiSourceOption)Enum.Parse(
-                        typeof(AiSourceOption), aiSource, true); }
+                    try { settings.AiSource = (AiSourceOption)Enum.Parse(typeof(AiSourceOption), aiSource, true); }
                     catch { }
                 }
 
                 string safety = ExtractJsonStringValue(json, "Safety");
                 if (!string.IsNullOrEmpty(safety))
                 {
-                    try { settings.Safety = (SafetyLevel)Enum.Parse(
-                        typeof(SafetyLevel), safety, true); }
+                    try { settings.Safety = (SafetyLevel)Enum.Parse(typeof(SafetyLevel), safety, true); }
                     catch { }
                 }
 
@@ -177,14 +149,9 @@ namespace AIAgentTool.Models
             return settings;
         }
 
-        /// <summary>
-        /// 簡易 JSON 字串值擷取
-        /// </summary>
         private static string ExtractJsonStringValue(string json, string key)
         {
-            // 匹配 "key": "value" 或 "key": value
-            string pattern = string.Format(
-                "\"{0}\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"", Regex.Escape(key));
+            string pattern = string.Format("\"{0}\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"", Regex.Escape(key));
             var match = Regex.Match(json, pattern);
             if (match.Success)
             {
@@ -194,9 +161,7 @@ namespace AIAgentTool.Models
                     .Replace("\\/", "/");
             }
 
-            // 嘗試非字串值 (bool/number)
-            pattern = string.Format(
-                "\"{0}\"\\s*:\\s*([^,\\}}\\]]+)", Regex.Escape(key));
+            pattern = string.Format("\"{0}\"\\s*:\\s*([^,\\}}\\]]+)", Regex.Escape(key));
             match = Regex.Match(json, pattern);
             if (match.Success)
                 return match.Groups[1].Value.Trim();
@@ -204,9 +169,6 @@ namespace AIAgentTool.Models
             return "";
         }
 
-        /// <summary>
-        /// JSON 字串跳脫
-        /// </summary>
         private static string EscapeJsonString(string s)
         {
             if (string.IsNullOrEmpty(s)) return "";
