@@ -84,6 +84,15 @@ namespace AIAgentTool
             this.FormClosing += MainForm_FormClosing;
             this.Resize += MainForm_Resize;
             pnlChatInner.Resize += delegate { if (!_isRendering) RenderChat(); };
+            // 功能快捷選單事件
+            btnMenuImage.Click += delegate { QuickAction("生成圖片："); };
+            btnMenuVideo.Click += delegate { QuickAction("生成影片："); };
+            btnMenuTTS.Click += delegate { QuickAction("朗讀："); };
+            btnMenuScreenshot.Click += delegate { txtInput.Text = "截圖"; SendMessage(); };
+            btnMenuWindows.Click += delegate { txtInput.Text = "列出視窗"; SendMessage(); };
+            btnMenuKnowledge.Click += delegate { QuickAction("知識庫搜尋："); };
+            btnMenuLaunch.Click += delegate { QuickAction("開啟 "); };
+            btnMenuCmd.Click += delegate { QuickAction("cmd "); };
 
         }
 
@@ -648,6 +657,12 @@ namespace AIAgentTool
             if (string.IsNullOrEmpty(s)) return "";
             return s.Replace("\\n", "\n").Replace("\\r", "\r")
                     .Replace("\\t", "\t").Replace("\\\"", "\"").Replace("\\\\", "\\");
+        }
+        private void QuickAction(string prefix)
+        {
+            txtInput.Text = prefix;
+            txtInput.SelectionStart = txtInput.Text.Length;
+            txtInput.Focus();
         }
 
         private string BuildContextQuery(string currentInput)
