@@ -202,46 +202,163 @@ namespace AIAgentTool
         // =======================================================
         // 程式碼按鈕
         // =======================================================
-        private void BtnRunCode_Click(object sender, EventArgs e)
+                private void BtnRunCode_Click(object sender, EventArgs e)
         {
             string code = rtbCode.Text.Trim();
-            if (string.IsNullOrEmpty(code)) { SetStatus("\u7121\u7a0b\u5f0f\u78bc\u53ef\u57f7\u884c"); return; }
+            if (string.IsNullOrEmpty(code)) { SetStatus("無程式碼可執行"); return; }
 
             DialogResult dr = MessageBox.Show(
-                "\u78ba\u5b9a\u8981\u7de8\u8b6f\u4e26\u57f7\u884c\u6b64\u7a0b\u5f0f\u78bc\u55ce\uff1f\n\n\u8acb\u78ba\u8a8d\u7a0b\u5f0f\u78bc\u5167\u5bb9\u5b89\u5168\u7121\u5bb3\u3002",
-                "\u57f7\u884c\u78ba\u8a8d", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                "確定要編譯並執行此程式碼嗎？\n\n請確認程式碼內容安全無害。",
+                "執行確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (dr != DialogResult.Yes) return;
 
-            SetStatus("\u7de8\u8b6f\u4e2d...");
-            CompileResult result = _automationService.CodeCompiler.Compile(code);
+            // 開始編譯（支援自動修復）
+            _isExecuting = true;
+            btnSend.Enabled = false;
+            btnRunCode.Enabled = false;
+            btnRunCode.Text = "修復中...";
 
-            if (result.Success)
+            Thread compileThread = new Thread(delegate()
             {
-                SetStatus("\u7de8\u8b6f\u6210\u529f\uff0c\u57f7\u884c\u4e2d...");
-                string output = _automationService.CodeCompiler.ExecuteCompiled(result.OutputPath, 30000);
+                AutoCompileAndFix(code);
+            });
+            compileThread.IsBackground = true;
+            compileThread.Start();
+        }
 
-                var resultMsg = new ChatMessage("ai",
-                    "\u2705 \u7de8\u8b6f\u57f7\u884c\u6210\u529f\uff01\n\n\u3010\u57f7\u884c\u8f38\u51fa\u3011\n" + output, DateTime.Now);
-                _currentSession.Messages.Add(resultMsg);
-                AddBubbleToUI(resultMsg);
-                SaveSession(_currentSession);
-                tabMain.SelectedTab = tabChat;
-                SetStatus("\u57f7\u884c\u5b8c\u6210");
+        /// <summary>
+        /// 自動編譯 + AI 除錯修復（最多嘗試 3 次）
+        /// </summary>
+        private void AutoCompileAndFix(string originalCode)
+        {
+            const int MAX_FIX_ATTEMPTS = 3;
+            string currentCode = originalCode;
+            CompileResult result = null;
+
+            for (int attempt = 0; attempt <= MAX_FIX_ATTEMPTS; attempt++)
+            {
+                // 更新 UI 狀態
+                int attemptNum = attempt;
+                ThreadSafeUI.Run(this, delegate
+                {
+                    if (attemptNum == 0)
+                        SetStatus("編譯中...");
+                    else
+                        SetStatus(string.Format("AI 修復第 {0} 次，重新編譯...", attemptNum));
+                    progressBar.Value = attemptNum * 25;
+                });
+
+                // 編譯
+                result = _automationService.CodeCompiler.Compile(currentCode);
+
+                if (result.Success)
+                {
+                    // 編譯成功
+                    string finalCode = currentCode;
+                    int fixCount = attemptNum;
+                    ThreadSafeUI.Run(this, delegate
+                    {
+                        _isExecuting = false;
+                        btnSend.Enabled = true;
+                        btnRunCode.Enabled = true;
+                        btnRunCode.Text = "> 編譯執行";
+                        progressBar.Value = 100;
+
+                        // 如果經過修復，更新程式碼顯示
+                        if (fixCount > 0)
+                        {
+                            rtbCode.Text = finalCode;
+                            var fixMsg = new ChatMessage("ai",
+                                string.Format("✅ 程式碼經過 AI 修復 {0} 次後編譯成功！\n輸出: {1}",
+                                    fixCount, result.OutputPath), DateTime.Now);
+                            _currentSession.Messages.Add(fixMsg);
+                            AddBubbleToUI(fixMsg);
+                        }
+                        else
+                        {
+                            var okMsg = new ChatMessage("ai",
+                                "✅ 編譯成功！\n輸出: " + result.OutputPath, DateTime.Now);
+                            _currentSession.Messages.Add(okMsg);
+                            AddBubbleToUI(okMsg);
+                        }
+                        SaveSession(_currentSession);
+                        SetStatus("編譯成功，執行中...");
+                        tabMain.SelectedTab = tabChat;
+                    });
+
+                    // 執行
+                    string output = _automationService.CodeCompiler.ExecuteCompiled(result.OutputPath, 30000);
+                    ThreadSafeUI.Run(this, delegate
+                    {
+                        var runMsg = new ChatMessage("ai",
+                            "🔹 執行結果：\n" + output, DateTime.Now);
+                        _currentSession.Messages.Add(runMsg);
+                        AddBubbleToUI(runMsg);
+                        SaveSession(_currentSession);
+                        SetStatus("執行完成");
+                        progressBar.Value = 0;
+                    });
+                    return;
+                }
+
+                // 編譯失敗
+                if (attempt >= MAX_FIX_ATTEMPTS)
+                    break; // 超過最大次數，放棄
+
+                // 嘗試 AI 修復
+                int currentAttempt = attempt + 1;
+                List<string> errors = result.Errors;
+                ThreadSafeUI.Run(this, delegate
+                {
+                    SetStatus(string.Format("編譯失敗（{0} 個錯誤），AI 修復中... ({1}/{2})",
+                        errors.Count, currentAttempt, MAX_FIX_ATTEMPTS));
+                    progressBar.Value = currentAttempt * 25;
+                });
+
+                // 呼叫 AI 修復
+                string fixedCode = _automationService.CodeGenerator.FixCompileErrors(currentCode, errors);
+
+                if (string.IsNullOrEmpty(fixedCode) || fixedCode == currentCode)
+                {
+                    // AI 無法修復或回傳相同程式碼
+                    ThreadSafeUI.Run(this, delegate
+                    {
+                        SetStatus("AI 無法修復此錯誤");
+                    });
+                    break;
+                }
+
+                currentCode = fixedCode;
+
+                // 短暫等待避免 API 限速
+                Thread.Sleep(1000);
             }
-            else
+
+            // 最終失敗
+            CompileResult finalResult = result;
+            ThreadSafeUI.Run(this, delegate
             {
+                _isExecuting = false;
+                btnSend.Enabled = true;
+                btnRunCode.Enabled = true;
+                btnRunCode.Text = "> 編譯執行";
+                progressBar.Value = 0;
+
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine("\u274c \u7de8\u8b6f\u5931\u6557\uff1a");
-                foreach (string err in result.Errors)
+                sb.AppendLine("❌ 編譯失敗（已嘗試 AI 修復 " + MAX_FIX_ATTEMPTS + " 次仍無法解決）：");
+                sb.AppendLine();
+                foreach (string err in finalResult.Errors)
                     sb.AppendLine("  " + err);
+                sb.AppendLine();
+                sb.AppendLine("💡 建議：在聊天中描述問題，例如「修正程式碼：xxx 錯誤」");
 
                 var errMsg = new ChatMessage("ai", sb.ToString(), DateTime.Now);
                 _currentSession.Messages.Add(errMsg);
                 AddBubbleToUI(errMsg);
                 SaveSession(_currentSession);
                 tabMain.SelectedTab = tabChat;
-                SetStatus("\u7de8\u8b6f\u5931\u6557");
-            }
+                SetStatus("編譯失敗");
+            });
         }
 
         private void BtnSaveCode_Click(object sender, EventArgs e)
