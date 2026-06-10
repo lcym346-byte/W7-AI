@@ -106,6 +106,91 @@ namespace AIAgentTool.Services.Core
                 plan.Add(step);
                 return plan;
             }
+            // ★ 媒體生成匹配
+            string lower = userInput.ToLower();
+
+            // 圖片生成
+            if ((lower.Contains("生成圖") || lower.Contains("畫") || lower.Contains("產生圖") ||
+                 lower.Contains("generate image") || lower.Contains("draw")) &&
+                !lower.Contains("程式") && !lower.Contains("code"))
+            {
+                List<TaskStep> steps = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "generate_image";
+                step.Desc = userInput;
+                step.Text = userInput;
+                steps.Add(step);
+                return steps;
+            }
+
+            // 語音合成
+            if (lower.Contains("朗讀") || lower.Contains("唸") || lower.Contains("語音") ||
+                lower.Contains("tts") || lower.Contains("text to speech") ||
+                lower.Contains("說出"))
+            {
+                List<TaskStep> steps = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "text_to_speech";
+                step.Desc = userInput;
+                step.Text = userInput;
+                steps.Add(step);
+                return steps;
+            }
+
+            // 螢幕截圖
+            if (lower.Contains("截圖") || lower.Contains("螢幕") ||
+                lower.Contains("screenshot") || lower.Contains("capture screen"))
+            {
+                List<TaskStep> steps = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "screenshot";
+                step.Desc = userInput;
+                steps.Add(step);
+                return steps;
+            }
+
+            // 視窗操作
+            if (lower.Contains("切換到") || lower.Contains("打開視窗") ||
+                lower.Contains("focus window") || lower.Contains("switch to"))
+            {
+                List<TaskStep> steps = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "focus_window";
+                step.Desc = userInput;
+                step.Text = userInput;
+                steps.Add(step);
+                return steps;
+            }
+
+            // 列出視窗
+            if (lower.Contains("列出視窗") || lower.Contains("有哪些視窗") ||
+                lower.Contains("list windows") || lower.Contains("開了什麼"))
+            {
+                List<TaskStep> steps = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "list_windows";
+                step.Desc = userInput;
+                steps.Add(step);
+                return steps;
+            }
+
+            // 點擊操作
+            if (lower.Contains("點擊") || lower.Contains("按一下") ||
+                lower.Contains("click at") || lower.Contains("click on"))
+            {
+                List<TaskStep> steps = new List<TaskStep>();
+                TaskStep step = new TaskStep();
+                step.Step = 1;
+                step.Type = "click";
+                step.Desc = userInput;
+                steps.Add(step);
+                return steps;
+            }
 
 
             // ★ 程式碼生成匹配（最優先，用 Contains 避免編碼問題）
