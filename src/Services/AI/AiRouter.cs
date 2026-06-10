@@ -48,13 +48,15 @@ namespace AIAgentTool.Services.AI
             _lastLocalLlmFailTime = DateTime.MinValue;
 
             if (_useLocalLlm && !string.IsNullOrEmpty(settings.LocalLlmUrl))
-            {
-                _localLlm = new OpenAiCompatibleService(
-                    "LocalLLM",
-                    settings.LocalLlmUrl + "/v1",
-                    "",
-                    settings.LocalLlmModel);
-            }
+{
+    _localLlm = new OpenAiCompatibleService(
+        "LocalLLM",
+        settings.LocalLlmUrl + "/v1",
+        "",
+        settings.LocalLlmModel);
+    _localLlm.SetTimeout(10000); // 本地 LLM 超時 10 秒（避免未啟動時卡太久）
+}
+
             else
             {
                 _localLlm = null;
