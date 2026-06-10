@@ -42,6 +42,16 @@ namespace AIAgentTool.Services.CodeGen
 "18. \u8a08\u6642\u5668/\u5012\u6578\u529f\u80fd\uff1a\u5982\u679c\u6709\u300c\u5206\u9418\u300d\u548c\u300c\u79d2\u300d\u5169\u500b\u8f38\u5165\u6846\uff0c\u7e3d\u79d2\u6578\u5fc5\u9808\u7528 (\u5206\u9418*60)+\u79d2 \u8a08\u7b97\u3002\u4e0d\u53ef\u5ffd\u7565\u5206\u9418\u6b04\u4f4d\u3002\u5012\u6578\u6642\u6bcf\u79d2\u905e\u6e1b\u7e3d\u79d2\u6578\uff0c\u986f\u793a\u683c\u5f0f\u7528 (totalSeconds/60) \u548c (totalSeconds%60) \u8f49\u63db\u70ba mm:ss\u3002\n" +
 "19. \u7576\u4f7f\u7528\u8005\u5831\u544a\u300c\u8f38\u5165\u5206\u9418\u6c92\u7528\u300d\u300c\u53ea\u80fd60\u79d2\u300d\u7b49\u554f\u984c\u6642\uff0c\u4ee3\u8868\u4f60\u7684\u7a0b\u5f0f\u6c92\u6709\u6b63\u78ba\u8b80\u53d6\u5206\u9418\u6b04\u7684\u6578\u5b57\uff0c\u8acb\u78ba\u4fdd int totalSeconds = (int.Parse(txtMin.Text) * 60) + int.Parse(txtSec.Text); \u9019\u6a23\u7684\u908f\u8f2f\u5b58\u5728\u3002\n" +
 "20. Event handlers must use the delegate keyword. NEVER use arrow => lambda syntax. Correct: timer.Tick += delegate(object sender, EventArgs e) ... Wrong: timer.Tick += (s,e) => ...";
+        "21. 【C# 版本限制】編譯器為 csc 4.x（C# 5.0），以下語法全部禁用：\n" +
+"    - 禁止 pattern matching：不可寫 if (x is Type y)，改用 Type y = x as Type; if (y != null)\n" +
+"    - 禁止 string interpolation：不可寫 $\"...\"，改用 string.Format()\n" +
+"    - 禁止 null conditional：不可寫 x?.Method()，改用 if (x != null) x.Method()\n" +
+"    - 禁止 expression body：不可寫 int Foo() => 123;，改用完整的 { return 123; }\n" +
+"    - 禁止 nameof()：改用字串常數\n" +
+"    - 禁止 auto-property initializer：不可寫 public int X { get; } = 5;，改在建構函式中賦值\n" +
+"    - 禁止 lambda 語法 => 於事件綁定：一律用 delegate 關鍵字\n";
+
+        
         public CodeGeneratorService(AiRouter aiRouter)
         {
             _aiRouter = aiRouter;
