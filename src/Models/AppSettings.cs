@@ -46,6 +46,10 @@ namespace AIAgentTool.Models
         public string DefaultSavePath { get; set; }
         public bool MinimizeToTray { get; set; }
         public bool ShowBalloonNotify { get; set; }
+        public string LocalAiUrl { get; set; }
+        public string TurboVecUrl { get; set; }
+        public string VideoApiUrl { get; set; }
+
 
         // 設定檔路徑
         private static readonly string SettingsFilePath = Path.Combine(
@@ -60,9 +64,13 @@ namespace AIAgentTool.Models
             AiSource = AiSourceOption.Auto;
             Safety = SafetyLevel.Medium;
             DefaultSavePath = Environment.GetFolderPath(
-                Environment.SpecialFolder.Desktop);
+            Environment.SpecialFolder.Desktop);
             MinimizeToTray = true;
             ShowBalloonNotify = true;
+             LocalAiUrl = "http://localhost:8080";
+            TurboVecUrl = "http://localhost:5050";
+            VideoApiUrl = "http://localhost:8501";
+
         }
 
         /// <summary>
@@ -83,6 +91,11 @@ namespace AIAgentTool.Models
                     "  \"DefaultSavePath\": \"{6}\",\n" +
                     "  \"MinimizeToTray\": {7},\n" +
                     "  \"ShowBalloonNotify\": {8}\n" +
+                    "  \"ShowBalloonNotify\": {8},\n" +
+                    "  \"LocalAiUrl\": \"{9}\",\n" +
+                    "  \"TurboVecUrl\": \"{10}\",\n" +
+                    "  \"VideoApiUrl\": \"{11}\"\n" +
+
                     "}}",
                     EscapeJsonString(GeminiApiKey),
                     EscapeJsonString(GroqApiKey),
@@ -123,8 +136,16 @@ namespace AIAgentTool.Models
                 settings.OpenRouterApiKey = ExtractJsonStringValue(json, "OpenRouterApiKey");
                 settings.DefaultSavePath = ExtractJsonStringValue(json, "DefaultSavePath");
                 settings.AgnesApiKey = ExtractJsonStringValue(json, "AgnesApiKey");
-
                 string aiSource = ExtractJsonStringValue(json, "AiSource");
+                settings.LocalAiUrl = ExtractJsonStringValue(json, "LocalAiUrl");
+                if (string.IsNullOrEmpty(settings.LocalAiUrl))
+                settings.LocalAiUrl = "http://localhost:8080";
+                settings.TurboVecUrl = ExtractJsonStringValue(json, "TurboVecUrl");
+                if (string.IsNullOrEmpty(settings.TurboVecUrl))
+                settings.TurboVecUrl = "http://localhost:5050";
+                settings.VideoApiUrl = ExtractJsonStringValue(json, "VideoApiUrl");
+                if (string.IsNullOrEmpty(settings.VideoApiUrl))
+                settings.VideoApiUrl = "http://localhost:8501";
                 if (!string.IsNullOrEmpty(aiSource))
                 {
                     try { settings.AiSource = (AiSourceOption)Enum.Parse(
