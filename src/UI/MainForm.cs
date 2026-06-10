@@ -438,71 +438,86 @@ namespace AIAgentTool
         }
 
         private void CreateBubbleControl(ChatMessage msg)
-        {
-            int panelWidth = pnlChatInner.ClientSize.Width - 30;
-            if (panelWidth < 300) panelWidth = 300;
-            int maxWidth = panelWidth - 80;
+{
+    int panelWidth = pnlChatInner.ClientSize.Width - 30;
+    if (panelWidth < 300) panelWidth = 300;
+    int maxWidth = panelWidth - 80;
 
-            Panel row = new Panel();
-            row.Width = panelWidth;
-            row.BackColor = pnlChatInner.BackColor;
-            row.Margin = new Padding(3, 4, 3, 4);
+    Panel row = new Panel();
+    row.Width = panelWidth;
+    row.BackColor = pnlChatInner.BackColor;
+    row.Margin = new Padding(3, 4, 3, 4);
 
-            Label lbl = new Label();
-            lbl.AutoSize = false;
-            lbl.MaximumSize = new Size(maxWidth, 0);
-            lbl.AutoSize = true;
-            lbl.Font = new Font("Microsoft JhengHei UI", 10F);
-            lbl.Padding = new Padding(10, 8, 10, 8);
-            lbl.Text = msg.Content;
-            lbl.Tag = msg;
+    RichTextBox rtb = new RichTextBox();
+    rtb.ReadOnly = true;
+    rtb.BorderStyle = BorderStyle.None;
+    rtb.ScrollBars = RichTextBoxScrollBars.None;
+    rtb.Font = new Font("Microsoft JhengHei UI", 10F);
+    rtb.Text = msg.Content;
+    rtb.Tag = msg;
+    rtb.DetectUrls = false;
+    rtb.WordWrap = true;
+    rtb.Cursor = Cursors.IBeam;
 
-            ContextMenuStrip bubbleMenu = new ContextMenuStrip();
-            ToolStripMenuItem miCopy = new ToolStripMenuItem("\u8907\u88fd");
-            miCopy.Click += delegate { try { Clipboard.SetText(msg.Content); } catch { } };
-            ToolStripMenuItem miDel = new ToolStripMenuItem("\u522a\u9664\u9019\u689d\u8a0a\u606f");
-            miDel.Click += delegate
-            {
-                _currentSession.Messages.Remove(msg);
-                SaveSession(_currentSession);
-                RenderChat();
-            };
-            bubbleMenu.Items.Add(miCopy);
-            bubbleMenu.Items.Add(miDel);
-            lbl.ContextMenuStrip = bubbleMenu;
+    // 計算高度
+    rtb.Width = Math.Min(maxWidth, panelWidth - 80);
+    Size sz = TextRenderer.MeasureText(msg.Content, rtb.Font,
+        new Size(rtb.Width - 20, int.MaxValue),
+        TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
+    rtb.Height = sz.Height + 24;
 
-            Size preferred = lbl.GetPreferredSize(new Size(maxWidth, 0));
-            lbl.Size = new Size(preferred.Width + 20, preferred.Height + 16);
+    // 右鍵選單
+    ContextMenuStrip bubbleMenu = new ContextMenuStrip();
+    ToolStripMenuItem miCopy = new ToolStripMenuItem("\u8907\u88fd\u5168\u90e8");
+    miCopy.Click += delegate { try { Clipboard.SetText(msg.Content); } catch { } };
+    ToolStripMenuItem miCopySelected = new ToolStripMenuItem("\u8907\u88fd\u9078\u53d6");
+    miCopySelected.Click += delegate {
+        if (!string.IsNullOrEmpty(rtb.SelectedText))
+            try { Clipboard.SetText(rtb.SelectedText); } catch { }
+    };
+    ToolStripMenuItem miDel = new ToolStripMenuItem("\u522a\u9664\u9019\u689d\u8a0a\u606f");
+    miDel.Click += delegate
+    {
+        _currentSession.Messages.Remove(msg);
+        SaveSession(_currentSession);
+        RenderChat();
+    };
+    bubbleMenu.Items.Add(miCopySelected);
+    bubbleMenu.Items.Add(miCopy);
+    bubbleMenu.Items.Add(new ToolStripSeparator());
+    bubbleMenu.Items.Add(miDel);
+    rtb.ContextMenuStrip = bubbleMenu;
 
-            if (msg.Role == "user")
-            {
-                lbl.BackColor = Color.FromArgb(0, 100, 180);
-                lbl.ForeColor = Color.White;
-                lbl.Location = new Point(row.Width - lbl.Width - 10, 5);
-            }
-            else
-            {
-                lbl.BackColor = Color.FromArgb(55, 55, 62);
-                lbl.ForeColor = Color.FromArgb(225, 225, 225);
-                lbl.Location = new Point(10, 5);
-            }
+    if (msg.Role == "user")
+    {
+        rtb.BackColor = Color.FromArgb(0, 100, 180);
+        rtb.ForeColor = Color.White;
+        rtb.Location = new Point(row.Width - rtb.Width - 10, 5);
+    }
+    else
+    {
+        rtb.BackColor = Color.FromArgb(55, 55, 62);
+        rtb.ForeColor = Color.FromArgb(225, 225, 225);
+        rtb.Location = new Point(10, 5);
+    }
 
-            Label lblTime = new Label();
-            lblTime.AutoSize = true;
-            lblTime.Font = new Font("Microsoft JhengHei UI", 7.5F);
-            lblTime.ForeColor = Color.FromArgb(120, 120, 130);
-            lblTime.Text = msg.Time.ToString("HH:mm");
-            if (msg.Role == "user")
-                lblTime.Location = new Point(lbl.Right - 40, lbl.Bottom + 2);
-            else
-                lblTime.Location = new Point(lbl.Left, lbl.Bottom + 2);
+    Label lblTime = new Label();
+    lblTime.AutoSize = true;
+    lblTime.Font = new Font("Microsoft JhengHei UI", 7.5F);
+    lblTime.ForeColor = Color.FromArgb(120, 120, 130);
+    lblTime.Text = msg.Time.ToString("HH:mm");
+    if (msg.Role == "user")
+        lblTime.Location = new Point(rtb.Right - 40, rtb.Bottom + 2);
+    else
+        lblTime.Location = new Point(rtb.Left, rtb.Bottom + 2);
 
-            row.Height = lbl.Bottom + 25;
-            row.Controls.Add(lbl);
-            row.Controls.Add(lblTime);
+    row.Height = rtb.Bottom + 25;
+    row.Controls.Add(rtb);
+    row.Controls.Add(lblTime);
 
-            pnlChatInner.Controls.Add(row);
-        }
+    pnlChatInner.Controls.Add(row);
+}
+
 
         // =======================================================
         // Session
