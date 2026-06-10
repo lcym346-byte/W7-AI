@@ -7,45 +7,55 @@ namespace AIAgentTool
     {
         private System.ComponentModel.IContainer components = null;
 
-        // \u9802\u90e8
+        // 頂部
         private Panel pnlTop;
         private Label lblTitle;
         private Button btnSettings;
         private Button btnNewChat;
 
-        // \u5de6\u5074
+        // 左側
         private Panel pnlSidebar;
         private ListBox lstSessions;
         private Label lblSessions;
         private ContextMenuStrip sessionMenu;
 
-        // \u4e2d\u9593\u4e3b\u5340 - \u5206\u9801
+        // 中間主區 - 分頁
         private TabControl tabMain;
         private TabPage tabChat;
         private TabPage tabCode;
 
-        // \u804a\u5929\u5340
+        // 聊天區
         private FlowLayoutPanel pnlChatInner;
 
+        // 功能選單列
+        private Panel pnlQuickMenu;
+        private Button btnMenuImage;
+        private Button btnMenuVideo;
+        private Button btnMenuTTS;
+        private Button btnMenuScreenshot;
+        private Button btnMenuWindows;
+        private Button btnMenuKnowledge;
+        private Button btnMenuLaunch;
+        private Button btnMenuCmd;
 
-        // \u8f38\u5165\u5340
+        // 輸入區
         private Panel pnlInput;
         private TextBox txtInput;
         private Button btnSend;
 
-        // \u7a0b\u5f0f\u78bc\u5340
+        // 程式碼區
         private RichTextBox rtbCode;
         private Panel pnlCodeButtons;
         private Button btnRunCode;
         private Button btnSaveCode;
         private Button btnCopyCode;
 
-        // \u72c0\u614b\u5217
+        // 狀態列
         private StatusStrip statusBar;
         private ToolStripStatusLabel lblStatus;
         private ToolStripProgressBar progressBar;
 
-        // \u7cfb\u7d71\u6258\u76e4
+        // 系統托盤
         private NotifyIcon trayIcon;
         private ContextMenuStrip trayMenu;
 
@@ -63,16 +73,16 @@ namespace AIAgentTool
             this.components = new System.ComponentModel.Container();
             this.SuspendLayout();
 
-            this.Text = "AI \u667a\u6167\u4ee3\u7406\u5de5\u5177 v2.0";
-            this.Size = new Size(950, 650);
-            this.MinimumSize = new Size(700, 480);
+            this.Text = "AI 智慧代理工具 v2.0";
+            this.Size = new Size(950, 700);
+            this.MinimumSize = new Size(700, 520);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(30, 30, 30);
             this.ForeColor = Color.FromArgb(220, 220, 220);
             this.Font = new Font("Microsoft JhengHei UI", 9.5F);
             this.KeyPreview = true;
 
-            // ===================== \u9802\u90e8 =====================
+            // ===================== 頂部 =====================
             pnlTop = new Panel();
             pnlTop.Dock = DockStyle.Top;
             pnlTop.Height = 48;
@@ -89,7 +99,7 @@ namespace AIAgentTool
             lblTitle.Padding = new Padding(12, 0, 0, 0);
 
             btnSettings = new Button();
-            btnSettings.Text = "\u2699 \u8a2d\u5b9a";
+            btnSettings.Text = "\u2699 設定";
             btnSettings.FlatStyle = FlatStyle.Flat;
             btnSettings.FlatAppearance.BorderSize = 1;
             btnSettings.FlatAppearance.BorderColor = Color.FromArgb(80, 80, 90);
@@ -101,7 +111,7 @@ namespace AIAgentTool
             btnSettings.Cursor = Cursors.Hand;
 
             btnNewChat = new Button();
-            btnNewChat.Text = "+ \u65b0\u5c0d\u8a71";
+            btnNewChat.Text = "+ 新對話";
             btnNewChat.FlatStyle = FlatStyle.Flat;
             btnNewChat.FlatAppearance.BorderSize = 1;
             btnNewChat.FlatAppearance.BorderColor = Color.FromArgb(80, 80, 90);
@@ -116,7 +126,7 @@ namespace AIAgentTool
             pnlTop.Controls.Add(btnNewChat);
             pnlTop.Controls.Add(btnSettings);
 
-            // ===================== \u5de6\u5074 =====================
+            // ===================== 左側 =====================
             pnlSidebar = new Panel();
             pnlSidebar.Dock = DockStyle.Left;
             pnlSidebar.Width = 200;
@@ -124,7 +134,7 @@ namespace AIAgentTool
             pnlSidebar.Padding = new Padding(6);
 
             lblSessions = new Label();
-            lblSessions.Text = "\u5c0d\u8a71\u7d00\u9304";
+            lblSessions.Text = "對話紀錄";
             lblSessions.Dock = DockStyle.Top;
             lblSessions.Height = 28;
             lblSessions.ForeColor = Color.FromArgb(160, 160, 170);
@@ -140,23 +150,23 @@ namespace AIAgentTool
             lstSessions.Font = new Font("Microsoft JhengHei UI", 9F);
 
             sessionMenu = new ContextMenuStrip();
-            sessionMenu.Items.Add("\u91cd\u65b0\u547d\u540d", null);
-            sessionMenu.Items.Add("\u522a\u9664\u6b64\u5c0d\u8a71", null);
+            sessionMenu.Items.Add("重新命名", null);
+            sessionMenu.Items.Add("刪除此對話", null);
             sessionMenu.Items.Add("-");
-            sessionMenu.Items.Add("\u6e05\u9664\u6240\u6709\u5c0d\u8a71", null);
+            sessionMenu.Items.Add("清除所有對話", null);
             lstSessions.ContextMenuStrip = sessionMenu;
 
             pnlSidebar.Controls.Add(lstSessions);
             pnlSidebar.Controls.Add(lblSessions);
 
-            // ===================== \u4e3b\u5340\u57df\u5206\u9801 =====================
+            // ===================== 主區域分頁 =====================
             tabMain = new TabControl();
             tabMain.Dock = DockStyle.Fill;
             tabMain.Font = new Font("Microsoft JhengHei UI", 9.5F);
             tabMain.BackColor = Color.FromArgb(32, 32, 36);
 
-            // --- \u804a\u5929\u5206\u9801 ---
-            tabChat = new TabPage("\u804a\u5929");
+            // --- 聊天分頁 ---
+            tabChat = new TabPage("聊天");
             tabChat.BackColor = Color.FromArgb(32, 32, 36);
 
             pnlChatInner = new FlowLayoutPanel();
@@ -166,7 +176,32 @@ namespace AIAgentTool
             pnlChatInner.WrapContents = false;
             pnlChatInner.BackColor = Color.FromArgb(32, 32, 36);
 
+            // ===================== 功能快捷選單 =====================
+            pnlQuickMenu = new Panel();
+            pnlQuickMenu.Dock = DockStyle.Bottom;
+            pnlQuickMenu.Height = 40;
+            pnlQuickMenu.BackColor = Color.FromArgb(35, 35, 42);
+            pnlQuickMenu.Padding = new Padding(6, 4, 6, 4);
 
+            btnMenuImage = CreateMenuButton("\U0001F3A8 生成圖片", 0);
+            btnMenuVideo = CreateMenuButton("\U0001F3AC 生成影片", 1);
+            btnMenuTTS = CreateMenuButton("\U0001F50A 語音", 2);
+            btnMenuScreenshot = CreateMenuButton("\U0001F4F7 截圖", 3);
+            btnMenuWindows = CreateMenuButton("\U0001F5D4 視窗", 4);
+            btnMenuKnowledge = CreateMenuButton("\U0001F4DA 知識庫", 5);
+            btnMenuLaunch = CreateMenuButton("\U0001F680 開程式", 6);
+            btnMenuCmd = CreateMenuButton("\U0001F4BB CMD", 7);
+
+            pnlQuickMenu.Controls.Add(btnMenuImage);
+            pnlQuickMenu.Controls.Add(btnMenuVideo);
+            pnlQuickMenu.Controls.Add(btnMenuTTS);
+            pnlQuickMenu.Controls.Add(btnMenuScreenshot);
+            pnlQuickMenu.Controls.Add(btnMenuWindows);
+            pnlQuickMenu.Controls.Add(btnMenuKnowledge);
+            pnlQuickMenu.Controls.Add(btnMenuLaunch);
+            pnlQuickMenu.Controls.Add(btnMenuCmd);
+
+            // ===================== 輸入區 =====================
             pnlInput = new Panel();
             pnlInput.Dock = DockStyle.Bottom;
             pnlInput.Height = 65;
@@ -183,7 +218,7 @@ namespace AIAgentTool
             txtInput.ScrollBars = ScrollBars.Vertical;
 
             btnSend = new Button();
-            btnSend.Text = "\u50b3\u9001";
+            btnSend.Text = "傳送";
             btnSend.Dock = DockStyle.Right;
             btnSend.Width = 70;
             btnSend.FlatStyle = FlatStyle.Flat;
@@ -196,11 +231,13 @@ namespace AIAgentTool
             pnlInput.Controls.Add(txtInput);
             pnlInput.Controls.Add(btnSend);
 
+            // 聊天分頁組裝順序（Bottom 先加）
             tabChat.Controls.Add(pnlChatInner);
+            tabChat.Controls.Add(pnlQuickMenu);
             tabChat.Controls.Add(pnlInput);
 
-            // --- \u7a0b\u5f0f\u78bc\u5206\u9801 ---
-            tabCode = new TabPage("\u7a0b\u5f0f\u78bc");
+            // --- 程式碼分頁 ---
+            tabCode = new TabPage("程式碼");
             tabCode.BackColor = Color.FromArgb(25, 25, 30);
 
             rtbCode = new RichTextBox();
@@ -218,7 +255,7 @@ namespace AIAgentTool
             pnlCodeButtons.BackColor = Color.FromArgb(35, 35, 42);
 
             btnRunCode = new Button();
-            btnRunCode.Text = "> \u7de8\u8b6f\u57f7\u884c";
+            btnRunCode.Text = "> 編譯執行";
             btnRunCode.Location = new Point(8, 5);
             btnRunCode.Size = new Size(90, 28);
             btnRunCode.FlatStyle = FlatStyle.Flat;
@@ -228,7 +265,7 @@ namespace AIAgentTool
             btnRunCode.Cursor = Cursors.Hand;
 
             btnSaveCode = new Button();
-            btnSaveCode.Text = "\u5132\u5b58";
+            btnSaveCode.Text = "儲存";
             btnSaveCode.Location = new Point(105, 5);
             btnSaveCode.Size = new Size(70, 28);
             btnSaveCode.FlatStyle = FlatStyle.Flat;
@@ -238,7 +275,7 @@ namespace AIAgentTool
             btnSaveCode.Cursor = Cursors.Hand;
 
             btnCopyCode = new Button();
-            btnCopyCode.Text = "\u8907\u88fd";
+            btnCopyCode.Text = "複製";
             btnCopyCode.Location = new Point(182, 5);
             btnCopyCode.Size = new Size(70, 28);
             btnCopyCode.FlatStyle = FlatStyle.Flat;
@@ -257,13 +294,13 @@ namespace AIAgentTool
             tabMain.TabPages.Add(tabChat);
             tabMain.TabPages.Add(tabCode);
 
-            // ===================== \u72c0\u614b\u5217 =====================
+            // ===================== 狀態列 =====================
             statusBar = new StatusStrip();
             statusBar.BackColor = Color.FromArgb(35, 35, 42);
             statusBar.ForeColor = Color.FromArgb(160, 160, 170);
 
             lblStatus = new ToolStripStatusLabel();
-            lblStatus.Text = "\u5c31\u7dd2";
+            lblStatus.Text = "就緒";
             lblStatus.Spring = true;
             lblStatus.TextAlign = ContentAlignment.MiddleLeft;
 
@@ -275,25 +312,45 @@ namespace AIAgentTool
             statusBar.Items.Add(lblStatus);
             statusBar.Items.Add(progressBar);
 
-            // ===================== \u6258\u76e4 =====================
+            // ===================== 托盤 =====================
             trayMenu = new ContextMenuStrip();
-            trayMenu.Items.Add("\u986f\u793a\u4e3b\u8996\u7a97", null);
+            trayMenu.Items.Add("顯示主視窗", null);
             trayMenu.Items.Add("-");
-            trayMenu.Items.Add("\u7d50\u675f\u7a0b\u5f0f", null);
+            trayMenu.Items.Add("結束程式", null);
 
             trayIcon = new NotifyIcon(this.components);
-            trayIcon.Text = "AI \u667a\u6167\u4ee3\u7406\u5de5\u5177";
+            trayIcon.Text = "AI 智慧代理工具";
             trayIcon.ContextMenuStrip = trayMenu;
             trayIcon.Visible = false;
             try { trayIcon.Icon = System.Drawing.SystemIcons.Application; } catch { }
 
-            // ===================== \u52a0\u5165\u4e3b\u8996\u7a97 =====================
+            // ===================== 加入主視窗 =====================
             this.Controls.Add(tabMain);
             this.Controls.Add(pnlSidebar);
             this.Controls.Add(statusBar);
             this.Controls.Add(pnlTop);
 
             this.ResumeLayout(false);
+        }
+
+        /// <summary>
+        /// 建立功能選單按鈕
+        /// </summary>
+        private Button CreateMenuButton(string text, int index)
+        {
+            Button btn = new Button();
+            btn.Text = text;
+            btn.Size = new Size(82, 32);
+            btn.Location = new Point(6 + index * 84, 4);
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 1;
+            btn.FlatAppearance.BorderColor = Color.FromArgb(60, 60, 70);
+            btn.BackColor = Color.FromArgb(45, 45, 55);
+            btn.ForeColor = Color.FromArgb(200, 200, 210);
+            btn.Font = new Font("Microsoft JhengHei UI", 8F);
+            btn.Cursor = Cursors.Hand;
+            btn.Tag = index;
+            return btn;
         }
     }
 }
