@@ -241,13 +241,38 @@ namespace AIAgentTool
             tabCode.BackColor = Color.FromArgb(25, 25, 30);
 
             rtbCode = new RichTextBox();
-            rtbCode.Dock = DockStyle.Fill;
-            rtbCode.BackColor = Color.FromArgb(20, 20, 25);
-            rtbCode.ForeColor = Color.FromArgb(200, 220, 255);
-            rtbCode.Font = new Font("Consolas", 10F);
-            rtbCode.BorderStyle = BorderStyle.None;
-            rtbCode.WordWrap = false;
-            rtbCode.AcceptsTab = true;
+rtbCode.Dock = DockStyle.Fill;
+rtbCode.BackColor = Color.FromArgb(20, 20, 25);
+rtbCode.ForeColor = Color.FromArgb(200, 220, 255);
+rtbCode.Font = new Font("Consolas", 10F);
+rtbCode.BorderStyle = BorderStyle.None;
+rtbCode.WordWrap = false;
+rtbCode.AcceptsTab = true;
+
+// 程式碼區右鍵選單
+ContextMenuStrip codeMenu = new ContextMenuStrip();
+ToolStripMenuItem miCodeCopy = new ToolStripMenuItem("複製");
+miCodeCopy.ShortcutKeys = Keys.Control | Keys.C;
+miCodeCopy.Click += delegate { if (!string.IsNullOrEmpty(rtbCode.SelectedText)) try { Clipboard.SetText(rtbCode.SelectedText); } catch { } };
+ToolStripMenuItem miCodeCopyAll = new ToolStripMenuItem("複製全部");
+miCodeCopyAll.Click += delegate { if (!string.IsNullOrEmpty(rtbCode.Text)) try { Clipboard.SetText(rtbCode.Text); } catch { } };
+ToolStripMenuItem miCodePaste = new ToolStripMenuItem("貼上");
+miCodePaste.ShortcutKeys = Keys.Control | Keys.V;
+miCodePaste.Click += delegate { rtbCode.Paste(DataFormats.GetFormat(DataFormats.Text)); };
+ToolStripMenuItem miCodeSelectAll = new ToolStripMenuItem("全選");
+miCodeSelectAll.ShortcutKeys = Keys.Control | Keys.A;
+miCodeSelectAll.Click += delegate { rtbCode.SelectAll(); };
+ToolStripMenuItem miCodeClear = new ToolStripMenuItem("清除");
+miCodeClear.Click += delegate { rtbCode.Clear(); };
+codeMenu.Items.Add(miCodeCopy);
+codeMenu.Items.Add(miCodeCopyAll);
+codeMenu.Items.Add(new ToolStripSeparator());
+codeMenu.Items.Add(miCodePaste);
+codeMenu.Items.Add(new ToolStripSeparator());
+codeMenu.Items.Add(miCodeSelectAll);
+codeMenu.Items.Add(miCodeClear);
+rtbCode.ContextMenuStrip = codeMenu;
+
 
             pnlCodeButtons = new Panel();
             pnlCodeButtons.Dock = DockStyle.Bottom;
