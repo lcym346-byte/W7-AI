@@ -223,13 +223,16 @@ namespace AIAgentTool.Services.Core
                 step.Desc = "滑鼠點擊";
                 // 嘗試解析座標
                 Match coordMatch = Regex.Match(input, @"(\d+)\s*[,，\s]\s*(\d+)");
-                if (coordMatch.Success)
-                {
-                    int.TryParse(coordMatch.Groups[1].Value, out int cx);
-                    int.TryParse(coordMatch.Groups[2].Value, out int cy);
-                    step.X = cx;
-                    step.Y = cy;
-                }
+if (coordMatch.Success)
+{
+    int cx = 0;
+    int cy = 0;
+    int.TryParse(coordMatch.Groups[1].Value, out cx);
+    int.TryParse(coordMatch.Groups[2].Value, out cy);
+    step.X = cx;
+    step.Y = cy;
+}
+
                 steps.Add(step);
                 return steps;
             }
