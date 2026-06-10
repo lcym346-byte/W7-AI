@@ -41,6 +41,22 @@ namespace AIAgentTool.Utils
             result = Regex.Replace(result, @"\n\s*\n\s*\n", "\n\n");
 
             return result.Trim();
+            /// <summary>
+/// 將 \uXXXX 格式的 Unicode 轉義還原為實際字元
+/// 例如 \u003c → <, \u003e → >, \u0026 → &
+/// </summary>
+private static string UnescapeUnicode(string text)
+{
+    if (string.IsNullOrEmpty(text)) return text;
+    if (!text.Contains("\\u")) return text;
+
+    return Regex.Replace(text, @"\\u([0-9a-fA-F]{4})", delegate(Match m)
+    {
+        int code = Convert.ToInt32(m.Groups[1].Value, 16);
+        return ((char)code).ToString();
+    });
+}
+
         }
 
         /// <summary>
@@ -121,14 +137,17 @@ namespace AIAgentTool.Utils
             var match = Regex.Match(json, pattern);
 
             if (match.Success)
-            {
-                return match.Groups[1].Value
-                    .Replace("\\\"", "\"")
-                    .Replace("\\n", "\n")
-                    .Replace("\\r", "\r")
-                    .Replace("\\t", "\t")
-                    .Replace("\\\\", "\\");
-            }
+{
+    string raw = match.Groups[1].Value;
+    raw = UnescapeUnicode(raw);
+    raw = raw.Replace("\\\"", "\"")
+             .Replace("\\n", "\n")
+             .Replace("\\r", "\r")
+             .Replace("\\t", "\t")
+             .Replace("\\\\", "\\");
+    return raw;
+}
+
 
             // 嘗試非字串值 (number, bool, null)
             pattern = string.Format(
@@ -228,14 +247,14 @@ namespace AIAgentTool.Utils
                 RegexOptions.IgnoreCase);
 
             if (match.Success)
-                return match.Groups[1].Value.Trim();
+    return UnescapeUnicode(match.Groups[1].Value.Trim());
 
             // 如果沒有 code block，檢查是否整段都是程式碼
             if (text.Contains("using System") || text.Contains("namespace ") ||
-                text.Contains("class ") || text.Contains("static void Main"))
-            {
-                return text.Trim();
-            }
+    text.Contains("class ") || text.Contains("static void Main"))
+{
+    return UnescapeUnicode(text.Trim());
+}
 
             return "";
         }
