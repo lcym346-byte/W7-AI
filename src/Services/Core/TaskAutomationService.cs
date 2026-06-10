@@ -401,7 +401,7 @@ namespace AIAgentTool.Services.Core
         // ═══════════════════════════════════════════
         // 程式碼生成
         // ═══════════════════════════════════════════
-        private void ExecuteGenerateCode(AgentTask task)
+                private void ExecuteGenerateCode(AgentTask task)
         {
             ReportStep(task, "生成程式碼中...");
             ReportProgress(20);
@@ -418,8 +418,30 @@ namespace AIAgentTool.Services.Core
                 return;
             }
 
-            ReportProgress(60);
-            CompileResult cr = _codeCompiler.Compile(code);
+            ReportProgress(50);
+
+            // 自動修復迴圈（最多 3 次）
+            const int MAX_FIX = 3;
+            CompileResult cr = null;
+            int fixCount = 0;
+
+            for (int i = 0; i <= MAX_FIX; i++)
+            {
+                cr = _codeCompiler.Compile(code);
+                if (cr.Success) break;
+
+                if (i >= MAX_FIX) break;
+
+                ReportStep(task, string.Format("編譯錯誤，AI 修復中... ({0}/{1})", i + 1, MAX_FIX));
+                ReportProgress(50 + (i + 1) * 10);
+
+                string fixedCode = _codeGenerator.FixCompileErrors(code, cr.Errors);
+                if (string.IsNullOrEmpty(fixedCode) || fixedCode == code)
+                    break; // AI 無法修復
+
+                code = fixedCode;
+                fixCount++;
+            }
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("【生成的程式碼】");
@@ -430,34 +452,25 @@ namespace AIAgentTool.Services.Core
 
             if (cr.Success)
             {
-                sb.AppendLine("✓ 編譯成功！");
+                if (fixCount > 0)
+                    sb.AppendLine(string.Format("✓ 經過 AI 修復 {0} 次後編譯成功！", fixCount));
+                else
+                    sb.AppendLine("✓ 編譯成功！");
                 sb.AppendLine("輸出: " + cr.OutputPath);
             }
             else
             {
-                sb.AppendLine("✗ 編譯錯誤:");
+                sb.AppendLine(string.Format("✗ 編譯失敗（已嘗試 AI 修復 {0} 次）:", MAX_FIX));
                 foreach (string err in cr.Errors)
                     sb.AppendLine("  " + err);
-
-                ReportStep(task, "嘗試修復...");
-                string fixedCode = _codeGenerator.FixCompileErrors(code, cr.Errors);
-                if (!string.IsNullOrEmpty(fixedCode) && fixedCode != code)
-                {
-                    CompileResult retry = _codeCompiler.Compile(fixedCode);
-                    if (retry.Success)
-                    {
-                        sb.AppendLine("\n【修復後】");
-                        sb.AppendLine("```csharp");
-                        sb.AppendLine(fixedCode);
-                        sb.AppendLine("```");
-                        sb.AppendLine("✓ 修復成功！");
-                    }
-                }
+                sb.AppendLine();
+                sb.AppendLine("💡 提示：輸入「修正 + 錯誤描述」讓 AI 再次嘗試修復");
             }
 
             task.Result = sb.ToString();
-            ReportProgress(90);
+            ReportProgress(95);
         }
+
 
         // ═══════════════════════════════════════════
         // 批次
