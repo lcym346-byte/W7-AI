@@ -11,6 +11,12 @@ namespace AIAgentTool.Services.AI
         private readonly OpenAiCompatibleService[] _freeProviders;
         private readonly AiSourceOption _preferredSource;
 
+        // === 新增：本地 LLM ===
+        private readonly OpenAiCompatibleService _localLlm;
+        private readonly bool _useLocalLlm;
+        private int _localLlmFailCount;
+        private DateTime _lastLocalLlmFailTime;
+
         private bool _geminiAvailable;
         private bool _ddgAvailable;
         private DateTime _lastGeminiFailTime;
@@ -36,33 +42,45 @@ namespace AIAgentTool.Services.AI
             _ddgFailCount = 0;
             LastUsedSource = "None";
 
+            // === 新增：初始化本地 LLM ===
+            _useLocalLlm = settings.UseLocalLlm;
+            _localLlmFailCount = 0;
+            _lastLocalLlmFailTime = DateTime.MinValue;
+
+            if (_useLocalLlm && !string.IsNullOrEmpty(settings.LocalLlmUrl))
+            {
+                _localLlm = new OpenAiCompatibleService(
+                    "LocalLLM",
+                    settings.LocalLlmUrl + "/v1",
+                    "",
+                    settings.LocalLlmModel);
+            }
+            else
+            {
+                _localLlm = null;
+            }
+
             // 初始化免費 OpenAI 相容 providers
             _freeProviders = new OpenAiCompatibleService[]
             {
-                // LLM7 - 完全不需要 API Key
                 new OpenAiCompatibleService("LLM7",
                     "https://api.llm7.io/v1", "", "deepseek-v3-0324"),
 
-                // Groq - 需要免費 Key (https://console.groq.com/keys)
                 new OpenAiCompatibleService("Groq",
                     "https://api.groq.com/openai/v1",
                     settings.GroqApiKey, "llama-3.3-70b-versatile"),
 
-                // Mistral - 需要免費 Key (https://console.mistral.ai/api-keys)
                 new OpenAiCompatibleService("Mistral",
                     "https://api.mistral.ai/v1",
                     settings.MistralApiKey, "mistral-small-latest"),
 
-                // OpenRouter - 需要免費 Key (https://openrouter.ai/keys)
                 new OpenAiCompatibleService("OpenRouter",
                     "https://openrouter.ai/api/v1",
                     settings.OpenRouterApiKey, "meta-llama/llama-3.3-70b-instruct:free"),
-              
-                // Agnes AI - 需要免費 Key (https://agnes-ai.com)
+
                 new OpenAiCompatibleService("Agnes",
                     "https://apihub.agnes-ai.com/v1",
                     settings.AgnesApiKey, "claw-3-mini"),
-
             };
         }
 
@@ -81,7 +99,7 @@ namespace AIAgentTool.Services.AI
                 case AiSourceOption.Offline:
                     LastUsedSource = "Offline";
                     return null;
-                                    case AiSourceOption.LLM7Only:
+                case AiSourceOption.LLM7Only:
                     result = TrySpecificFreeProvider("LLM7", prompt, systemInstruction);
                     break;
                 case AiSourceOption.GroqOnly:
@@ -97,11 +115,19 @@ namespace AIAgentTool.Services.AI
                     result = TrySpecificFreeProvider("Agnes", prompt, systemInstruction);
                     break;
 
+                // === 新增：本地 LLM 專用模式 ===
+                case AiSourceOption.LocalLlmOnly:
+                    result = TryLocalLlm(prompt, systemInstruction);
+                    break;
+
                 case AiSourceOption.Auto:
                 default:
-                    // Gemini 優先
-                    result = TryGemini(prompt, systemInstruction);
-                    // DuckDuckGo 其次
+                    // === 修改：本地 LLM 最優先 ===
+                    result = TryLocalLlm(prompt, systemInstruction);
+                    // Gemini 其次
+                    if (result == null)
+                        result = TryGemini(prompt, systemInstruction);
+                    // DuckDuckGo 第三
                     if (result == null)
                         result = TryDuckDuckGo(prompt);
                     // 免費 providers 最後
@@ -124,6 +150,39 @@ namespace AIAgentTool.Services.AI
         public string Ask(string prompt)
         {
             return SendMessage(prompt, null);
+        }
+
+        // === 新增：嘗試本地 LLM ===
+        private string TryLocalLlm(string prompt, string systemInstruction)
+        {
+            if (_localLlm == null || !_useLocalLlm)
+                return null;
+
+            if (_localLlmFailCount >= MAX_FAIL_BEFORE_SKIP)
+            {
+                if (DateTime.Now - _lastLocalLlmFailTime < RETRY_WAIT)
+                    return null;
+                _localLlmFailCount = 0;
+            }
+
+            try
+            {
+                string result = _localLlm.SendMessage(prompt, systemInstruction);
+                if (!string.IsNullOrEmpty(result))
+                {
+                    _localLlmFailCount = 0;
+                    LastUsedSource = "LocalLLM (KoboldCpp)";
+                    return result;
+                }
+            }
+            catch
+            {
+                // 本地 LLM 未啟動或連線失敗
+            }
+
+            _localLlmFailCount++;
+            _lastLocalLlmFailTime = DateTime.Now;
+            return null;
         }
 
         private string TryGemini(string prompt, string systemInstruction)
@@ -181,7 +240,6 @@ namespace AIAgentTool.Services.AI
         {
             foreach (var provider in _freeProviders)
             {
-                // 跳過沒有 Key 的（LLM7 除外，它不需要 Key）
                 if (provider.ProviderName != "LLM7" &&
                     !provider.IsAvailable)
                     continue;
@@ -207,11 +265,13 @@ namespace AIAgentTool.Services.AI
         {
             return string.Format(
                 "AI 狀態:\n" +
-                "  Gemini: {0} (失敗 {1} 次)\n" +
-                "  DuckDuckGo: {2} (失敗 {3} 次)\n" +
-                "  免費 Providers: {4} 個\n" +
-                "  偏好來源: {5}\n" +
-                "  最後使用: {6}",
+                "  本地 LLM: {0}\n" +
+                "  Gemini: {1} (失敗 {2} 次)\n" +
+                "  DuckDuckGo: {3} (失敗 {4} 次)\n" +
+                "  免費 Providers: {5} 個\n" +
+                "  偏好來源: {6}\n" +
+                "  最後使用: {7}",
+                _localLlm != null ? "已啟用 (失敗 " + _localLlmFailCount + " 次)" : "未啟用",
                 _gemini.IsAvailable ? "已設定" : "未設定 Key",
                 _geminiFailCount,
                 _ddgAvailable ? "可用" : "不可用",
@@ -225,11 +285,31 @@ namespace AIAgentTool.Services.AI
         {
             _geminiFailCount = 0;
             _ddgFailCount = 0;
+            _localLlmFailCount = 0;
         }
 
         public string TestAllConnections()
         {
             StringBuilder sb = new StringBuilder();
+
+            // === 新增：測試本地 LLM ===
+            sb.Append("測試本地 LLM (KoboldCpp)... ");
+            if (_localLlm != null && _useLocalLlm)
+            {
+                try
+                {
+                    bool ok = _localLlm.TestConnection();
+                    sb.AppendLine(ok ? "OK" : "FAILED (請確認 KoboldCpp 是否已啟動)");
+                }
+                catch
+                {
+                    sb.AppendLine("FAILED (無法連線)");
+                }
+            }
+            else
+            {
+                sb.AppendLine("未啟用");
+            }
 
             sb.Append("測試 Gemini API... ");
             if (_gemini.IsAvailable)
@@ -262,6 +342,7 @@ namespace AIAgentTool.Services.AI
 
             return sb.ToString();
         }
+
         private string TrySpecificFreeProvider(string name, string prompt, string systemInstruction)
         {
             foreach (var provider in _freeProviders)
@@ -282,5 +363,5 @@ namespace AIAgentTool.Services.AI
             }
             return null;
         }
-    }      
+    }
 }
