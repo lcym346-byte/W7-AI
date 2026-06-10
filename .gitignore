@@ -58,3 +58,9 @@ GeneratedCode/
 *.swp
 *.swo
 *~
+
+# 本地 AI (llama.cpp) - 檔案太大不上傳
+llama/*.exe
+llama/*.dll
+llama/*.gguf
+llama/*.bin
