@@ -15,7 +15,8 @@ namespace AIAgentTool.Models
         GroqOnly,
         MistralOnly,
         OpenRouterOnly,
-        AgnesOnly
+        AgnesOnly,
+        LocalLlmOnly
     }
 
     public enum SafetyLevel
@@ -41,6 +42,11 @@ namespace AIAgentTool.Models
         public string TurboVecUrl { get; set; }
         public string VideoApiUrl { get; set; }
 
+        // === 新增：本地 LLM 設定 ===
+        public string LocalLlmUrl { get; set; }
+        public string LocalLlmModel { get; set; }
+        public bool UseLocalLlm { get; set; }
+
         private static readonly string SettingsFilePath = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory, "settings.json");
 
@@ -59,6 +65,11 @@ namespace AIAgentTool.Models
             LocalAiUrl = "http://localhost:8080";
             TurboVecUrl = "http://localhost:5050";
             VideoApiUrl = "http://localhost:8501";
+
+            // === 新增：本地 LLM 預設值 ===
+            LocalLlmUrl = "http://127.0.0.1:5001";
+            LocalLlmModel = "local";
+            UseLocalLlm = true;
         }
 
         public void Save()
@@ -79,7 +90,10 @@ namespace AIAgentTool.Models
                 sb.AppendLine("  \"ShowBalloonNotify\": " + ShowBalloonNotify.ToString().ToLower() + ",");
                 sb.AppendLine("  \"LocalAiUrl\": \"" + EscapeJsonString(LocalAiUrl) + "\",");
                 sb.AppendLine("  \"TurboVecUrl\": \"" + EscapeJsonString(TurboVecUrl) + "\",");
-                sb.AppendLine("  \"VideoApiUrl\": \"" + EscapeJsonString(VideoApiUrl) + "\"");
+                sb.AppendLine("  \"VideoApiUrl\": \"" + EscapeJsonString(VideoApiUrl) + "\",");
+                sb.AppendLine("  \"LocalLlmUrl\": \"" + EscapeJsonString(LocalLlmUrl) + "\",");
+                sb.AppendLine("  \"LocalLlmModel\": \"" + EscapeJsonString(LocalLlmModel) + "\",");
+                sb.AppendLine("  \"UseLocalLlm\": " + UseLocalLlm.ToString().ToLower());
                 sb.AppendLine("}");
 
                 File.WriteAllText(SettingsFilePath, sb.ToString());
@@ -119,6 +133,20 @@ namespace AIAgentTool.Models
                 settings.VideoApiUrl = ExtractJsonStringValue(json, "VideoApiUrl");
                 if (string.IsNullOrEmpty(settings.VideoApiUrl))
                     settings.VideoApiUrl = "http://localhost:8501";
+
+                // === 新增：載入本地 LLM 設定 ===
+                settings.LocalLlmUrl = ExtractJsonStringValue(json, "LocalLlmUrl");
+                if (string.IsNullOrEmpty(settings.LocalLlmUrl))
+                    settings.LocalLlmUrl = "http://127.0.0.1:5001";
+
+                settings.LocalLlmModel = ExtractJsonStringValue(json, "LocalLlmModel");
+                if (string.IsNullOrEmpty(settings.LocalLlmModel))
+                    settings.LocalLlmModel = "local";
+
+                string useLocal = ExtractJsonStringValue(json, "UseLocalLlm");
+                if (useLocal == "true") settings.UseLocalLlm = true;
+                else if (useLocal == "false") settings.UseLocalLlm = false;
+                else settings.UseLocalLlm = true;
 
                 string aiSource = ExtractJsonStringValue(json, "AiSource");
                 if (!string.IsNullOrEmpty(aiSource))
