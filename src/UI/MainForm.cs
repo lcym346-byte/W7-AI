@@ -134,8 +134,19 @@ namespace AIAgentTool
             progressBar.Value = 10;
             tabMain.SelectedTab = tabChat;
 
-            string contextQuery = BuildContextQuery(text);
-            _taskRunner.ExecuteAsync(contextQuery, null, null);
+            // 如果使用者輸入包含「修復」「修正」「bug」「錯誤」等關鍵字，自動附帶目前的程式碼
+string contextQuery = BuildContextQuery(text);
+string lowerText = text.ToLower();
+if ((lowerText.Contains("修復") || lowerText.Contains("修正") || 
+     lowerText.Contains("bug") || lowerText.Contains("錯誤") || 
+     lowerText.Contains("問題") || lowerText.Contains("fix")) 
+    && !string.IsNullOrEmpty(rtbCode.Text.Trim()))
+{
+    contextQuery = BuildContextQuery(
+        text + "\n\n【請修改以下現有程式碼，不要重新生成新程式】\n```csharp\n" + rtbCode.Text + "\n```");
+}
+_taskRunner.ExecuteAsync(contextQuery, null, null);
+
         }
 
         // =======================================================
