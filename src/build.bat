@@ -35,17 +35,19 @@ C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe ^
   Services\CodeGen\CodeGeneratorService.cs ^
   Services\CodeGen\CodeCompilerService.cs ^
   Services\CodeGen\CodeTemplateLibrary.cs ^
+  Services\CodeGen\LessonMemory.cs ^
+  Services\CodeGen\SkillManager.cs ^
+  Services\CodeGen\CodeTestService.cs ^
   Services\Core\AIReasoningEngine.cs ^
   Services\Core\SmartTaskPlanner.cs ^
   Services\Core\SmartTaskExecutor.cs ^
   Services\Core\TaskAutomationService.cs ^
   Services\Core\BackgroundTaskRunner.cs ^
+  Services\Core\MediaTaskExecutor.cs ^
   UI\MainForm.cs ^
   UI\MainForm.Designer.cs ^
   UI\SettingsForm.cs ^
   UI\SettingsForm.Designer.cs
-src\Services\CodeGen\*.cs
-
 
 copy /Y AIAgentTool.exe.config AIAgentTool.exe.config >nul 2>&1
 
