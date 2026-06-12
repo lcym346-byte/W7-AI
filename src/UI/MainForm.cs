@@ -60,6 +60,9 @@ namespace AIAgentTool
             if (!Directory.Exists(_sessionsDir))
                 Directory.CreateDirectory(_sessionsDir);
         }
+// 在 InitializeServices() 最後加入：
+string skillInfo = _automationService.CodeGenerator.GetSkillsSummary();
+SetStatus(skillInfo);
 
         private void WireEvents()
         {
