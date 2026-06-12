@@ -43,7 +43,6 @@ C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe ^
   Services\Core\SmartTaskExecutor.cs ^
   Services\Core\TaskAutomationService.cs ^
   Services\Core\BackgroundTaskRunner.cs ^
-  
   UI\MainForm.cs ^
   UI\MainForm.Designer.cs ^
   UI\SettingsForm.cs ^
