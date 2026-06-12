@@ -39,6 +39,9 @@ namespace AIAgentTool.Services.AI
 
                 string requestBody = BuildChatJson(prompt);
 
+                // 強制 TLS 1.2
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)768 | (SecurityProtocolType)3072;
+
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(CHAT_URL);
                 request.Method = "POST";
                 request.ContentType = "application/json";
@@ -86,6 +89,9 @@ namespace AIAgentTool.Services.AI
         {
             try
             {
+                // 強制 TLS 1.2
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)768 | (SecurityProtocolType)3072;
+
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(STATUS_URL);
                 request.Method = "GET";
                 request.Accept = "text/event-stream";
