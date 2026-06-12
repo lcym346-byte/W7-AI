@@ -110,6 +110,46 @@ namespace AIAgentTool.Services.CodeGen
 
             return null;
         }
+        private readonly SkillManager _skills;
+
+// 在建構函式中加入：
+public CodeGeneratorService(AiRouter aiRouter)
+{
+    _aiRouter = aiRouter;
+    _templates = new CodeTemplateLibrary();
+    _memory = new LessonMemory();
+    _skills = new SkillManager();
+}
+
+private string TryAiGeneration(string description)
+{
+    if (_aiRouter == null) return null;
+
+    // 歷史經驗 + 技能提示
+    string prevention = _memory.GetPreventionHints();
+    string skillHint = _skills.GenerateSkillPrompt(description);
+
+    string prompt = string.Format(
+        "{0}\n{1}\n請用 C# (.NET Framework 4.0) 寫一個程式：{2}\n\n" +
+        "要求：完整的 .cs 檔案，可以直接編譯執行。",
+        prevention, skillHint, description);
+
+    string response = _aiRouter.SendMessage(prompt, SYSTEM_INSTRUCTION);
+    // ... 後面不變
+}
+
+// 新增公開方法給 MainForm 呼叫
+public void RecordSkill(string userRequest, string finalCode, 
+    List<string> errorsFixed, int fixAttempts)
+{
+    _skills.CreateSkillFromSuccess(userRequest, finalCode, errorsFixed, fixAttempts);
+}
+
+public string GetSkillsSummary()
+{
+    return _skills.GetSkillsSummary();
+}
+
 
         /// <summary>
         /// 請 AI 修正編譯錯誤（接受錯誤列表）
