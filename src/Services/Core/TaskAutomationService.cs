@@ -514,7 +514,8 @@ namespace AIAgentTool.Services.Core
         // ═══════════════════════════════════════════
         public AIReasoningEngine ReasoningEngine { get { return _reasoning; } }
         public CodeCompilerService CodeCompiler { get { return _codeCompiler; } }
-        public CodeGeneratorService CodeGenerator { get { return _codeGenerator; } }
+        public CodeGeneratorService CodeGenerator { get { return _codeGenerator; }}
+        public AiRouter AiRouter { get { return _aiRouter; } }
 
         // ═══════════════════════════════════════════
         // 輔助
@@ -564,4 +565,3 @@ namespace AIAgentTool.Services.Core
         }
     }
 }
-public AiRouter AiRouter { get { return _aiRouter; } }
