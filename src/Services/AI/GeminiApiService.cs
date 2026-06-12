@@ -31,9 +31,15 @@ namespace AIAgentTool.Services.AI
                 return null;
 
             try
-            {
-                string url = string.Format(API_URL, _model, _apiKey);
-                string requestBody = BuildRequestJson(prompt, systemInstruction);
+{
+    string url = string.Format(API_URL, _model, _apiKey);
+    string requestBody = BuildRequestJson(prompt, systemInstruction);
+
+    // 強制 TLS 1.2（加入這一行）
+    System.Net.ServicePointManager.SecurityProtocol = (System.Net.SecurityProtocolType)768 | (System.Net.SecurityProtocolType)3072;
+
+    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+
 
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = "POST";
