@@ -41,6 +41,15 @@ namespace AIAgentTool
                 lstSessions.SelectedIndex = 0;
                 RenderChat();
             }
+
+            // 啟動時顯示已學習的技能數量
+            try
+            {
+                string skillInfo = _automationService.CodeGenerator.GetSkillsSummary();
+                if (!string.IsNullOrEmpty(skillInfo))
+                    SetStatus(skillInfo);
+            }
+            catch { }
         }
 
         private void InitializeServices()
@@ -60,9 +69,6 @@ namespace AIAgentTool
             if (!Directory.Exists(_sessionsDir))
                 Directory.CreateDirectory(_sessionsDir);
         }
-// 在 InitializeServices() 最後加入：
-string skillInfo = _automationService.CodeGenerator.GetSkillsSummary();
-SetStatus(skillInfo);
 
         private void WireEvents()
         {
@@ -87,6 +93,7 @@ SetStatus(skillInfo);
             this.FormClosing += MainForm_FormClosing;
             this.Resize += MainForm_Resize;
             pnlChatInner.Resize += delegate { if (!_isRendering) RenderChat(); };
+
             // 功能快捷選單事件
             btnMenuImage.Click += delegate { QuickAction("生成圖片："); };
             btnMenuVideo.Click += delegate { QuickAction("生成影片："); };
@@ -96,7 +103,6 @@ SetStatus(skillInfo);
             btnMenuKnowledge.Click += delegate { QuickAction("知識庫搜尋："); };
             btnMenuLaunch.Click += delegate { QuickAction("開啟 "); };
             btnMenuCmd.Click += delegate { QuickAction("cmd "); };
-
         }
 
         // =======================================================
@@ -138,18 +144,17 @@ SetStatus(skillInfo);
             tabMain.SelectedTab = tabChat;
 
             // 如果使用者輸入包含「修復」「修正」「bug」「錯誤」等關鍵字，自動附帶目前的程式碼
-string contextQuery = BuildContextQuery(text);
-string lowerText = text.ToLower();
-if ((lowerText.Contains("修復") || lowerText.Contains("修正") || 
-     lowerText.Contains("bug") || lowerText.Contains("錯誤") || 
-     lowerText.Contains("問題") || lowerText.Contains("fix")) 
-    && !string.IsNullOrEmpty(rtbCode.Text.Trim()))
-{
-    contextQuery = BuildContextQuery(
-        text + "\n\n【請修改以下現有程式碼，不要重新生成新程式】\n```csharp\n" + rtbCode.Text + "\n```");
-}
-_taskRunner.ExecuteAsync(contextQuery, null, null);
-
+            string contextQuery = BuildContextQuery(text);
+            string lowerText = text.ToLower();
+            if ((lowerText.Contains("修復") || lowerText.Contains("修正") ||
+                 lowerText.Contains("bug") || lowerText.Contains("錯誤") ||
+                 lowerText.Contains("問題") || lowerText.Contains("fix"))
+                && !string.IsNullOrEmpty(rtbCode.Text.Trim()))
+            {
+                contextQuery = BuildContextQuery(
+                    text + "\n\n【請修改以下現有程式碼，不要重新生成新程式】\n```csharp\n" + rtbCode.Text + "\n```");
+            }
+            _taskRunner.ExecuteAsync(contextQuery, null, null);
         }
 
         // =======================================================
@@ -216,7 +221,7 @@ _taskRunner.ExecuteAsync(contextQuery, null, null);
         // =======================================================
         // 程式碼按鈕
         // =======================================================
-                private void BtnRunCode_Click(object sender, EventArgs e)
+        private void BtnRunCode_Click(object sender, EventArgs e)
         {
             string code = rtbCode.Text.Trim();
             if (string.IsNullOrEmpty(code)) { SetStatus("無程式碼可執行"); return; }
@@ -241,232 +246,261 @@ _taskRunner.ExecuteAsync(contextQuery, null, null);
         }
 
         /// <summary>
-/// 自動編譯 + 功能測試 + AI 除錯修復（最多嘗試 3 次）
-/// </summary>
-private void AutoCompileAndFix(string originalCode)
-{
-    const int MAX_FIX_ATTEMPTS = 3;
-    string currentCode = originalCode;
-    CompileResult result = null;
-    string userRequirement = "";
-
-    // 取得使用者原始需求（從最近的 user 訊息中找）
-    if (_currentSession != null)
-    {
-        for (int i = _currentSession.Messages.Count - 1; i >= 0; i--)
+        /// 自動編譯 + 功能測試 + AI 除錯修復 + 經驗學習（最多嘗試 3 次）
+        /// </summary>
+        private void AutoCompileAndFix(string originalCode)
         {
-            if (_currentSession.Messages[i].Role == "user")
+            const int MAX_FIX_ATTEMPTS = 3;
+            string currentCode = originalCode;
+            CompileResult result = null;
+            string userRequirement = "";
+
+            // 取得使用者原始需求（從最近的 user 訊息中找）
+            if (_currentSession != null)
             {
-                userRequirement = _currentSession.Messages[i].Content;
-                break;
+                for (int i = _currentSession.Messages.Count - 1; i >= 0; i--)
+                {
+                    if (_currentSession.Messages[i].Role == "user")
+                    {
+                        userRequirement = _currentSession.Messages[i].Content;
+                        break;
+                    }
+                }
             }
-        }
-    }
 
-    for (int attempt = 0; attempt <= MAX_FIX_ATTEMPTS; attempt++)
-    {
-        int attemptNum = attempt;
-        ThreadSafeUI.Run(this, delegate
-        {
-            if (attemptNum == 0)
-                SetStatus("編譯中...");
-            else
-                SetStatus(string.Format("AI 修復第 {0} 次，重新編譯...", attemptNum));
-            progressBar.Value = attemptNum * 20;
-        });
+            // 記錄原始碼（用於學習比較）
+            string originalSourceForLesson = originalCode;
+            List<string> allErrorsEncountered = new List<string>();
 
-        // === 階段一：編譯 ===
-        result = _automationService.CodeCompiler.Compile(currentCode);
-
-        if (!result.Success)
-        {
-            // 編譯失敗 → AI 修復
-            if (attempt >= MAX_FIX_ATTEMPTS) break;
-
-            int currentAttempt = attempt + 1;
-            List<string> errors = result.Errors;
-            ThreadSafeUI.Run(this, delegate
+            for (int attempt = 0; attempt <= MAX_FIX_ATTEMPTS; attempt++)
             {
-                SetStatus(string.Format("編譯失敗（{0} 個錯誤），AI 修復中... ({1}/{2})",
-                    errors.Count, currentAttempt, MAX_FIX_ATTEMPTS));
-                progressBar.Value = currentAttempt * 20;
-            });
+                int attemptNum = attempt;
+                ThreadSafeUI.Run(this, delegate
+                {
+                    if (attemptNum == 0)
+                        SetStatus("編譯中...");
+                    else
+                        SetStatus(string.Format("AI 修復第 {0} 次，重新編譯...", attemptNum));
+                    progressBar.Value = attemptNum * 20;
+                });
 
-            string fixedCode = _automationService.CodeGenerator.FixCompileErrors(currentCode, errors);
-            if (string.IsNullOrEmpty(fixedCode) || fixedCode == currentCode) break;
+                // === 階段一：編譯 ===
+                result = _automationService.CodeCompiler.Compile(currentCode);
 
-            currentCode = fixedCode;
-            Thread.Sleep(1000);
-            continue;
-        }
+                if (!result.Success)
+                {
+                    // 記錄錯誤（用於學習）
+                    foreach (string err in result.Errors)
+                    {
+                        if (!allErrorsEncountered.Contains(err))
+                            allErrorsEncountered.Add(err);
+                    }
 
-        // === 階段二：功能測試 ===
-        ThreadSafeUI.Run(this, delegate
-        {
-            SetStatus("編譯成功，正在進行功能測試...");
-            progressBar.Value = 60;
-        });
+                    // 編譯失敗 → AI 修復
+                    if (attempt >= MAX_FIX_ATTEMPTS) break;
 
-        CodeTestService testService = new CodeTestService(
-            _automationService.AiRouter, _automationService.CodeCompiler);
-        List<TestCase> testResults = testService.AnalyzeAndGenerateTests(currentCode, userRequirement);
+                    int currentAttempt = attempt + 1;
+                    List<string> errors = result.Errors;
+                    ThreadSafeUI.Run(this, delegate
+                    {
+                        SetStatus(string.Format("編譯失敗（{0} 個錯誤），AI 修復中... ({1}/{2})",
+                            errors.Count, currentAttempt, MAX_FIX_ATTEMPTS));
+                        progressBar.Value = currentAttempt * 20;
+                    });
 
-        // 統計結果
-        List<TestCase> failedTests = new List<TestCase>();
-        int passCount = 0;
-        foreach (var t in testResults)
-        {
-            if (t.Result == TestResult.Fail)
-                failedTests.Add(t);
-            else if (t.Result == TestResult.Pass)
-                passCount++;
-        }
+                    string fixedCode = _automationService.CodeGenerator.FixCompileErrors(currentCode, errors);
+                    if (string.IsNullOrEmpty(fixedCode) || fixedCode == currentCode) break;
 
-        if (failedTests.Count == 0)
-        {
-            // === 全部通過 → 交付 ===
-            string finalCode = currentCode;
-            int fixCount = attemptNum;
-            int passed = passCount;
-            int totalTests = testResults.Count;
+                    currentCode = fixedCode;
+                    Thread.Sleep(1000);
+                    continue;
+                }
 
+                // === 階段二：功能測試 ===
+                ThreadSafeUI.Run(this, delegate
+                {
+                    SetStatus("編譯成功，正在進行功能測試...");
+                    progressBar.Value = 60;
+                });
+
+                CodeTestService testService = new CodeTestService(
+                    _automationService.AiRouter, _automationService.CodeCompiler);
+                List<TestCase> testResults = testService.AnalyzeAndGenerateTests(currentCode, userRequirement);
+
+                // 統計結果
+                List<TestCase> failedTests = new List<TestCase>();
+                int passCount = 0;
+                foreach (TestCase t in testResults)
+                {
+                    if (t.Result == TestResult.Fail)
+                        failedTests.Add(t);
+                    else if (t.Result == TestResult.Pass)
+                        passCount++;
+                }
+
+                if (failedTests.Count == 0)
+                {
+                    // === 全部通過 → 交付 + 學習 ===
+                    string finalCode = currentCode;
+                    int fixCount = attemptNum;
+                    int passed = passCount;
+                    int totalTests = testResults.Count;
+
+                    // ★★★ 經驗學習：記錄修復經驗 ★★★
+                    if (fixCount > 0 && allErrorsEncountered.Count > 0)
+                    {
+                        try
+                        {
+                            // 記錄每個遇到的錯誤
+                            foreach (string errLine in allErrorsEncountered)
+                            {
+                                // 提取錯誤碼（如 CS1525, CS1056 等）
+                                Match errMatch = Regex.Match(errLine, @"(CS\d{4})");
+                                string errCode = errMatch.Success ? errMatch.Groups[1].Value : "UNKNOWN";
+                                _automationService.CodeGenerator.RecordFixLesson(
+                                    errCode, errLine, originalSourceForLesson, finalCode);
+                            }
+                        }
+                        catch { }
+                    }
+
+                    // ★★★ 技能學習：記錄成功技能 ★★★
+                    try
+                    {
+                        List<string> fixedErrors = new List<string>();
+                        foreach (string err in allErrorsEncountered)
+                            fixedErrors.Add(err);
+
+                        _automationService.CodeGenerator.RecordSkill(
+                            userRequirement, finalCode, fixedErrors, fixCount);
+                    }
+                    catch { }
+
+                    ThreadSafeUI.Run(this, delegate
+                    {
+                        _isExecuting = false;
+                        btnSend.Enabled = true;
+                        btnRunCode.Enabled = true;
+                        btnRunCode.Text = "> 編譯執行";
+                        progressBar.Value = 100;
+
+                        if (fixCount > 0)
+                            rtbCode.Text = finalCode;
+
+                        StringBuilder msg = new StringBuilder();
+                        if (fixCount > 0)
+                            msg.AppendLine(string.Format("✅ 程式碼經過 AI 修復 {0} 次後編譯成功！", fixCount));
+                        else
+                            msg.AppendLine("✅ 編譯成功！");
+
+                        msg.AppendLine(string.Format("🧪 功能測試：{0}/{1} 項通過", passed, totalTests));
+                        msg.AppendLine("輸出: " + result.OutputPath);
+
+                        // 顯示學習狀態
+                        int lessonCount = _automationService.CodeGenerator.GetLessonCount();
+                        string skillSummary = _automationService.CodeGenerator.GetSkillsSummary();
+                        msg.AppendLine(string.Format("🧠 已累積 {0} 條修復經驗", lessonCount));
+                        if (!string.IsNullOrEmpty(skillSummary))
+                            msg.AppendLine("📚 " + skillSummary);
+
+                        var okMsg = new ChatMessage("ai", msg.ToString(), DateTime.Now);
+                        _currentSession.Messages.Add(okMsg);
+                        AddBubbleToUI(okMsg);
+                        SaveSession(_currentSession);
+                        SetStatus("編譯成功，測試通過");
+                        tabMain.SelectedTab = tabChat;
+                    });
+
+                    // 執行
+                    string output = _automationService.CodeCompiler.ExecuteCompiled(result.OutputPath, 30000);
+                    ThreadSafeUI.Run(this, delegate
+                    {
+                        var runMsg = new ChatMessage("ai",
+                            "🔹 執行結果：\n" + output, DateTime.Now);
+                        _currentSession.Messages.Add(runMsg);
+                        AddBubbleToUI(runMsg);
+                        SaveSession(_currentSession);
+                        SetStatus("執行完成");
+                        progressBar.Value = 0;
+                    });
+                    return;
+                }
+                else
+                {
+                    // === 有測試失敗 → AI 修復功能問題 ===
+                    if (attempt >= MAX_FIX_ATTEMPTS) break;
+
+                    int failCount = failedTests.Count;
+                    int currentAttempt = attempt + 1;
+
+                    ThreadSafeUI.Run(this, delegate
+                    {
+                        SetStatus(string.Format("功能測試發現 {0} 個問題，AI 修正中... ({1}/{2})",
+                            failCount, currentAttempt, MAX_FIX_ATTEMPTS));
+                        progressBar.Value = 70;
+
+                        // 顯示測試結果
+                        StringBuilder testMsg = new StringBuilder();
+                        testMsg.AppendLine(string.Format("🧪 功能測試結果：{0} 通過，{1} 失敗",
+                            passCount, failCount));
+                        foreach (TestCase t in testResults)
+                        {
+                            if (t.Result == TestResult.Pass)
+                                testMsg.AppendLine("  ✅ " + t.Name);
+                            else
+                                testMsg.AppendLine("  ❌ " + t.Name + "：" + t.FailReason);
+                        }
+                        var testInfoMsg = new ChatMessage("ai", testMsg.ToString(), DateTime.Now);
+                        _currentSession.Messages.Add(testInfoMsg);
+                        AddBubbleToUI(testInfoMsg);
+                        SaveSession(_currentSession);
+                    });
+
+                    // 生成修復提示並讓 AI 修正
+                    string fixPrompt = testService.GenerateFixPrompt(currentCode, failedTests);
+                    List<string> fixErrors = new List<string>();
+                    fixErrors.Add(fixPrompt);
+                    string fixedCode = _automationService.CodeGenerator.FixCompileErrors(currentCode, fixErrors);
+                    if (string.IsNullOrEmpty(fixedCode) || fixedCode == currentCode) break;
+
+                    currentCode = fixedCode;
+                    Thread.Sleep(1000);
+                }
+            }
+
+            // === 最終失敗 ===
+            CompileResult finalResult = result;
             ThreadSafeUI.Run(this, delegate
             {
                 _isExecuting = false;
                 btnSend.Enabled = true;
                 btnRunCode.Enabled = true;
                 btnRunCode.Text = "> 編譯執行";
-                progressBar.Value = 100;
-
-                if (fixCount > 0)
-                    rtbCode.Text = finalCode;
-
-                StringBuilder msg = new StringBuilder();
-                if (fixCount > 0)
-                    msg.AppendLine(string.Format("✅ 程式碼經過 AI 修復 {0} 次後編譯成功！", fixCount));
-                else
-                    msg.AppendLine("✅ 編譯成功！");
-
-                msg.AppendLine(string.Format("🧪 功能測試：{0}/{1} 項通過", passed, totalTests));
-                msg.AppendLine("輸出: " + result.OutputPath);
-
-                var okMsg = new ChatMessage("ai", msg.ToString(), DateTime.Now);
-                _currentSession.Messages.Add(okMsg);
-                AddBubbleToUI(okMsg);
-                SaveSession(_currentSession);
-                SetStatus("編譯成功，測試通過");
-                tabMain.SelectedTab = tabChat;
-            });
-
-            // 執行
-            string output = _automationService.CodeCompiler.ExecuteCompiled(result.OutputPath, 30000);
-            ThreadSafeUI.Run(this, delegate
-            {
-                var runMsg = new ChatMessage("ai",
-                    "🔹 執行結果：\n" + output, DateTime.Now);
-                _currentSession.Messages.Add(runMsg);
-                AddBubbleToUI(runMsg);
-                SaveSession(_currentSession);
-                SetStatus("執行完成");
                 progressBar.Value = 0;
-            });
-            return;
-        }
-        else
-        {
-            // === 有測試失敗 → AI 修復功能問題 ===
-            if (attempt >= MAX_FIX_ATTEMPTS) break;
 
-            int failCount = failedTests.Count;
-            int currentAttempt = attempt + 1;
-
-            ThreadSafeUI.Run(this, delegate
-            {
-                SetStatus(string.Format("功能測試發現 {0} 個問題，AI 修正中... ({1}/{2})",
-                    failCount, currentAttempt, MAX_FIX_ATTEMPTS));
-                progressBar.Value = 70;
-
-                // 顯示測試結果
-                StringBuilder testMsg = new StringBuilder();
-                testMsg.AppendLine(string.Format("🧪 功能測試結果：{0} 通過，{1} 失敗", passCount, failCount));
-                foreach (var t in testResults)
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("❌ 修復失敗（已嘗試 " + MAX_FIX_ATTEMPTS + " 次）：");
+                sb.AppendLine();
+                if (finalResult != null && !finalResult.Success)
                 {
-                    if (t.Result == TestResult.Pass)
-                        testMsg.AppendLine("  ✅ " + t.Name);
-                    else
-                        testMsg.AppendLine("  ❌ " + t.Name + "：" + t.FailReason);
+                    foreach (string err in finalResult.Errors)
+                        sb.AppendLine("  " + err);
                 }
-                var testInfoMsg = new ChatMessage("ai", testMsg.ToString(), DateTime.Now);
-                _currentSession.Messages.Add(testInfoMsg);
-                AddBubbleToUI(testInfoMsg);
+                else
+                {
+                    sb.AppendLine("  功能測試未通過，AI 無法自動修正");
+                }
+                sb.AppendLine();
+                sb.AppendLine("💡 建議：在聊天中描述具體問題，例如「修正：數字鍵盤按了沒反應」");
+
+                var errMsg = new ChatMessage("ai", sb.ToString(), DateTime.Now);
+                _currentSession.Messages.Add(errMsg);
+                AddBubbleToUI(errMsg);
                 SaveSession(_currentSession);
+                tabMain.SelectedTab = tabChat;
+                SetStatus("修復失敗");
             });
-
-            // 生成修復提示並讓 AI 修正
-            string fixPrompt = testService.GenerateFixPrompt(currentCode, failedTests);
-            string fixedCode = _automationService.CodeGenerator.FixCompileErrors(currentCode, fixPrompt);
-            if (string.IsNullOrEmpty(fixedCode) || fixedCode == currentCode) break;
-
-            currentCode = fixedCode;
-            Thread.Sleep(1000);
         }
-    }
-
-    // === 最終失敗 ===
-    CompileResult finalResult = result;
-    ThreadSafeUI.Run(this, delegate
-    {
-        _isExecuting = false;
-        btnSend.Enabled = true;
-        btnRunCode.Enabled = true;
-        btnRunCode.Text = "> 編譯執行";
-        progressBar.Value = 0;
-
-        StringBuilder sb = new StringBuilder();
-        sb.AppendLine("❌ 修復失敗（已嘗試 " + MAX_FIX_ATTEMPTS + " 次）：");
-        sb.AppendLine();
-        if (finalResult != null && !finalResult.Success)
-        {
-            foreach (string err in finalResult.Errors)
-                sb.AppendLine("  " + err);
-        }
-        else
-        {
-            sb.AppendLine("  功能測試未通過，AI 無法自動修正");
-        }
-        sb.AppendLine();
-        sb.AppendLine("💡 建議：在聊天中描述具體問題，例如「修正：數字鍵盤按了沒反應」");
-
-        var errMsg = new ChatMessage("ai", sb.ToString(), DateTime.Now);
-        _currentSession.Messages.Add(errMsg);
-        AddBubbleToUI(errMsg);
-        SaveSession(_currentSession);
-        tabMain.SelectedTab = tabChat;
-        SetStatus("修復失敗");
-    });
-    // 在 "✅ 編譯成功" 的區塊中，SaveSession 之後加入：
-
-// 記錄技能（學習迴圈）
-List<string> fixedErrors = new List<string>();
-if (finalResult != null && finalResult.Errors != null)
-{
-    foreach (string err in finalResult.Errors)
-        fixedErrors.Add(err);
-}
-_automationService.CodeGenerator.RecordSkill(
-    userRequirement, finalCode, fixedErrors, fixCount);
-
-// 記錄修復經驗
-if (fixCount > 0 && fixedErrors.Count > 0)
-{
-    Match errMatch = Regex.Match(fixedErrors[0], @"(CS\d{4})");
-    string errCode = errMatch.Success ? errMatch.Groups[1].Value : "UNKNOWN";
-    _automationService.CodeGenerator.RecordFixLesson(
-        errCode, fixedErrors[0], originalCode, finalCode);
-}
-
-}
-
 
         private void BtnSaveCode_Click(object sender, EventArgs e)
         {
@@ -545,86 +579,86 @@ if (fixCount > 0 && fixedErrors.Count > 0)
         }
 
         private void CreateBubbleControl(ChatMessage msg)
-{
-    int panelWidth = pnlChatInner.ClientSize.Width - 30;
-    if (panelWidth < 300) panelWidth = 300;
-    int maxWidth = panelWidth - 80;
+        {
+            int panelWidth = pnlChatInner.ClientSize.Width - 30;
+            if (panelWidth < 300) panelWidth = 300;
+            int maxWidth = panelWidth - 80;
 
-    Panel row = new Panel();
-    row.Width = panelWidth;
-    row.BackColor = pnlChatInner.BackColor;
-    row.Margin = new Padding(3, 4, 3, 4);
+            Panel row = new Panel();
+            row.Width = panelWidth;
+            row.BackColor = pnlChatInner.BackColor;
+            row.Margin = new Padding(3, 4, 3, 4);
 
-    RichTextBox rtb = new RichTextBox();
-    rtb.ReadOnly = true;
-    rtb.BorderStyle = BorderStyle.None;
-    rtb.ScrollBars = RichTextBoxScrollBars.None;
-    rtb.Font = new Font("Microsoft JhengHei UI", 10F);
-    rtb.Text = msg.Content;
-    rtb.Tag = msg;
-    rtb.DetectUrls = false;
-    rtb.WordWrap = true;
-    rtb.Cursor = Cursors.IBeam;
+            RichTextBox rtb = new RichTextBox();
+            rtb.ReadOnly = true;
+            rtb.BorderStyle = BorderStyle.None;
+            rtb.ScrollBars = RichTextBoxScrollBars.None;
+            rtb.Font = new Font("Microsoft JhengHei UI", 10F);
+            rtb.Text = msg.Content;
+            rtb.Tag = msg;
+            rtb.DetectUrls = false;
+            rtb.WordWrap = true;
+            rtb.Cursor = Cursors.IBeam;
 
-    // 計算高度
-    rtb.Width = Math.Min(maxWidth, panelWidth - 80);
-    Size sz = TextRenderer.MeasureText(msg.Content, rtb.Font,
-        new Size(rtb.Width - 20, int.MaxValue),
-        TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
-    rtb.Height = sz.Height + 24;
+            // 計算高度
+            rtb.Width = Math.Min(maxWidth, panelWidth - 80);
+            Size sz = TextRenderer.MeasureText(msg.Content, rtb.Font,
+                new Size(rtb.Width - 20, int.MaxValue),
+                TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
+            rtb.Height = sz.Height + 24;
 
-    // 右鍵選單
-    ContextMenuStrip bubbleMenu = new ContextMenuStrip();
-    ToolStripMenuItem miCopy = new ToolStripMenuItem("\u8907\u88fd\u5168\u90e8");
-    miCopy.Click += delegate { try { Clipboard.SetText(msg.Content); } catch { } };
-    ToolStripMenuItem miCopySelected = new ToolStripMenuItem("\u8907\u88fd\u9078\u53d6");
-    miCopySelected.Click += delegate {
-        if (!string.IsNullOrEmpty(rtb.SelectedText))
-            try { Clipboard.SetText(rtb.SelectedText); } catch { }
-    };
-    ToolStripMenuItem miDel = new ToolStripMenuItem("\u522a\u9664\u9019\u689d\u8a0a\u606f");
-    miDel.Click += delegate
-    {
-        _currentSession.Messages.Remove(msg);
-        SaveSession(_currentSession);
-        RenderChat();
-    };
-    bubbleMenu.Items.Add(miCopySelected);
-    bubbleMenu.Items.Add(miCopy);
-    bubbleMenu.Items.Add(new ToolStripSeparator());
-    bubbleMenu.Items.Add(miDel);
-    rtb.ContextMenuStrip = bubbleMenu;
+            // 右鍵選單
+            ContextMenuStrip bubbleMenu = new ContextMenuStrip();
+            ToolStripMenuItem miCopy = new ToolStripMenuItem("\u8907\u88fd\u5168\u90e8");
+            miCopy.Click += delegate { try { Clipboard.SetText(msg.Content); } catch { } };
+            ToolStripMenuItem miCopySelected = new ToolStripMenuItem("\u8907\u88fd\u9078\u53d6");
+            miCopySelected.Click += delegate
+            {
+                if (!string.IsNullOrEmpty(rtb.SelectedText))
+                    try { Clipboard.SetText(rtb.SelectedText); } catch { }
+            };
+            ToolStripMenuItem miDel = new ToolStripMenuItem("\u522a\u9664\u9019\u689d\u8a0a\u606f");
+            miDel.Click += delegate
+            {
+                _currentSession.Messages.Remove(msg);
+                SaveSession(_currentSession);
+                RenderChat();
+            };
+            bubbleMenu.Items.Add(miCopySelected);
+            bubbleMenu.Items.Add(miCopy);
+            bubbleMenu.Items.Add(new ToolStripSeparator());
+            bubbleMenu.Items.Add(miDel);
+            rtb.ContextMenuStrip = bubbleMenu;
 
-    if (msg.Role == "user")
-    {
-        rtb.BackColor = Color.FromArgb(0, 100, 180);
-        rtb.ForeColor = Color.White;
-        rtb.Location = new Point(row.Width - rtb.Width - 10, 5);
-    }
-    else
-    {
-        rtb.BackColor = Color.FromArgb(55, 55, 62);
-        rtb.ForeColor = Color.FromArgb(225, 225, 225);
-        rtb.Location = new Point(10, 5);
-    }
+            if (msg.Role == "user")
+            {
+                rtb.BackColor = Color.FromArgb(0, 100, 180);
+                rtb.ForeColor = Color.White;
+                rtb.Location = new Point(row.Width - rtb.Width - 10, 5);
+            }
+            else
+            {
+                rtb.BackColor = Color.FromArgb(55, 55, 62);
+                rtb.ForeColor = Color.FromArgb(225, 225, 225);
+                rtb.Location = new Point(10, 5);
+            }
 
-    Label lblTime = new Label();
-    lblTime.AutoSize = true;
-    lblTime.Font = new Font("Microsoft JhengHei UI", 7.5F);
-    lblTime.ForeColor = Color.FromArgb(120, 120, 130);
-    lblTime.Text = msg.Time.ToString("HH:mm");
-    if (msg.Role == "user")
-        lblTime.Location = new Point(rtb.Right - 40, rtb.Bottom + 2);
-    else
-        lblTime.Location = new Point(rtb.Left, rtb.Bottom + 2);
+            Label lblTime = new Label();
+            lblTime.AutoSize = true;
+            lblTime.Font = new Font("Microsoft JhengHei UI", 7.5F);
+            lblTime.ForeColor = Color.FromArgb(120, 120, 130);
+            lblTime.Text = msg.Time.ToString("HH:mm");
+            if (msg.Role == "user")
+                lblTime.Location = new Point(rtb.Right - 40, rtb.Bottom + 2);
+            else
+                lblTime.Location = new Point(rtb.Left, rtb.Bottom + 2);
 
-    row.Height = rtb.Bottom + 25;
-    row.Controls.Add(rtb);
-    row.Controls.Add(lblTime);
+            row.Height = rtb.Bottom + 25;
+            row.Controls.Add(rtb);
+            row.Controls.Add(lblTime);
 
-    pnlChatInner.Controls.Add(row);
-}
-
+            pnlChatInner.Controls.Add(row);
+        }
 
         // =======================================================
         // Session
@@ -715,7 +749,10 @@ if (fixCount > 0 && fixedErrors.Count > 0)
                 }
                 catch { }
             }
-            _sessions.Sort(delegate(ChatSession a, ChatSession b) { return b.CreatedAt.CompareTo(a.CreatedAt); });
+            _sessions.Sort(delegate(ChatSession a, ChatSession b)
+            {
+                return b.CreatedAt.CompareTo(a.CreatedAt);
+            });
         }
 
         private ChatSession ParseSessionJson(string json)
@@ -897,6 +934,7 @@ if (fixCount > 0 && fixedErrors.Count > 0)
             return s.Replace("\\n", "\n").Replace("\\r", "\r")
                     .Replace("\\t", "\t").Replace("\\\"", "\"").Replace("\\\\", "\\");
         }
+
         private void QuickAction(string prefix)
         {
             txtInput.Text = prefix;
