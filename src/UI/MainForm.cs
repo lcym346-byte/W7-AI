@@ -114,16 +114,54 @@ pnlChatInner.MouseEnter += delegate
         // =======================================================
         // 傳送
         // =======================================================
-        private void BtnSend_Click(object sender, EventArgs e) { SendMessage(); }
+        private void BtnSend_Click(object sender, EventArgs e)
+{
+    if (_isExecuting)
+    {
+        // 停止執行
+        _taskRunner.Stop();
+        _isExecuting = false;
+        btnSend.Text = "傳送";
+        btnSend.Enabled = true;
+        btnRunCode.Enabled = true;
+        btnRunCode.Text = "> 編譯執行";
+        progressBar.Value = 0;
+        SetStatus("已手動停止");
+
+        var stopMsg = new ChatMessage("ai", "⏹ 已手動停止執行", DateTime.Now);
+        _currentSession.Messages.Add(stopMsg);
+        AddBubbleToUI(stopMsg);
+        SaveSession(_currentSession);
+
+        // 重新啟動 TaskRunner
+        _taskRunner = new BackgroundTaskRunner(_automationService);
+        _taskRunner.OnTaskCompleted += TaskRunner_OnTaskCompleted;
+        _taskRunner.OnStepUpdate += TaskRunner_OnStepUpdate;
+        _taskRunner.OnProgressUpdate += TaskRunner_OnProgressUpdate;
+        _taskRunner.OnError += TaskRunner_OnError;
+        _taskRunner.Start();
+        return;
+    }
+    SendMessage();
+}
 
         private void TxtInput_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter && !e.Shift)
-            {
-                e.SuppressKeyPress = true;
-                SendMessage();
-            }
-        }
+{
+    if (e.KeyCode == Keys.Enter && !e.Shift)
+    {
+        e.SuppressKeyPress = true;
+        if (_isExecuting)
+            BtnSend_Click(sender, e);
+        else
+            SendMessage();
+    }
+    else if (e.Control && e.KeyCode == Keys.A)
+    {
+        txtInput.SelectAll();
+        e.SuppressKeyPress = true;
+    }
+}
+
 
         private void SendMessage()
         {
@@ -143,8 +181,9 @@ pnlChatInner.MouseEnter += delegate
             SaveSession(_currentSession);
 
             _isExecuting = true;
-            btnSend.Enabled = false;
-            btnSend.Text = "...";
+btnSend.Enabled = true;
+btnSend.Text = "停止";
+
             SetStatus("\u57f7\u884c\u4e2d: " + Truncate(text, 40));
             progressBar.Value = 10;
             tabMain.SelectedTab = tabChat;
