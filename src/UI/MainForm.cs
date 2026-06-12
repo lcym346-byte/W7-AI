@@ -103,6 +103,12 @@ namespace AIAgentTool
             btnMenuKnowledge.Click += delegate { QuickAction("知識庫搜尋："); };
             btnMenuLaunch.Click += delegate { QuickAction("開啟 "); };
             btnMenuCmd.Click += delegate { QuickAction("cmd "); };
+            // 修正聊天面板滾輪問題
+pnlChatInner.MouseEnter += delegate
+{
+    pnlChatInner.Focus();
+};
+
         }
 
         // =======================================================
