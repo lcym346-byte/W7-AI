@@ -14,9 +14,9 @@ namespace AIAgentTool.Services.CodeGen
     public class CodeGeneratorService
     {
         private readonly AiRouter _aiRouter;
-private readonly CodeTemplateLibrary _templates;
-private readonly LessonMemory _memory;
-private readonly SkillManager _skills;  // ← 加入這行
+        private readonly CodeTemplateLibrary _templates;
+        private readonly LessonMemory _memory;
+        private readonly SkillManager _skills;
 
         private const string SYSTEM_INSTRUCTION =
             "你是一個 C# 程式碼生成器。請嚴格遵守以下規則：\n" +
@@ -55,12 +55,12 @@ private readonly SkillManager _skills;  // ← 加入這行
                 "數字按鈕的 Click 事件中寫入 _lastFocusedTextBox。或者使用 txtMin.Focused / txtSec.Focused 判斷。\n";
 
         public CodeGeneratorService(AiRouter aiRouter)
-{
-    _aiRouter = aiRouter;
-    _templates = new CodeTemplateLibrary();
-    _memory = new LessonMemory();
-    _skills = new SkillManager();  // ← 加入這行
-}
+        {
+            _aiRouter = aiRouter;
+            _templates = new CodeTemplateLibrary();
+            _memory = new LessonMemory();
+            _skills = new SkillManager();
+        }
 
         /// <summary>
         /// 從自然語言描述生成程式碼
@@ -84,21 +84,21 @@ private readonly SkillManager _skills;  // ← 加入這行
         }
 
         /// <summary>
-        /// 嘗試用 AI 生成程式碼（加入歷史經驗）
+        /// 嘗試用 AI 生成程式碼（加入歷史經驗 + 技能提示）
         /// </summary>
         private string TryAiGeneration(string description)
-{
-    if (_aiRouter == null) return null;
+        {
+            if (_aiRouter == null) return null;
 
-    string prevention = _memory.GetPreventionHints();
-    string skillHint = _skills.GenerateSkillPrompt(description);  // ← 加入這行
+            string prevention = _memory.GetPreventionHints();
+            string skillHint = _skills.GenerateSkillPrompt(description);
 
-    string prompt = string.Format(
-        "{0}\n{1}\n請用 C# (.NET Framework 4.0) 寫一個程式：{2}\n\n" +
-        "要求：完整的 .cs 檔案，可以直接編譯執行。",
-        prevention, skillHint, description);  // ← 修改這行
+            string prompt = string.Format(
+                "{0}\n{1}\n請用 C# (.NET Framework 4.0) 寫一個程式：{2}\n\n" +
+                "要求：完整的 .cs 檔案，可以直接編譯執行。",
+                prevention, skillHint, description);
 
-    string response = _aiRouter.SendMessage(prompt, SYSTEM_INSTRUCTION);
+            string response = _aiRouter.SendMessage(prompt, SYSTEM_INSTRUCTION);
 
             if (string.IsNullOrEmpty(response))
                 return null;
@@ -113,46 +113,6 @@ private readonly SkillManager _skills;  // ← 加入這行
 
             return null;
         }
-        private readonly SkillManager _skills;
-
-// 在建構函式中加入：
-public CodeGeneratorService(AiRouter aiRouter)
-{
-    _aiRouter = aiRouter;
-    _templates = new CodeTemplateLibrary();
-    _memory = new LessonMemory();
-    _skills = new SkillManager();
-}
-
-private string TryAiGeneration(string description)
-{
-    if (_aiRouter == null) return null;
-
-    // 歷史經驗 + 技能提示
-    string prevention = _memory.GetPreventionHints();
-    string skillHint = _skills.GenerateSkillPrompt(description);
-
-    string prompt = string.Format(
-        "{0}\n{1}\n請用 C# (.NET Framework 4.0) 寫一個程式：{2}\n\n" +
-        "要求：完整的 .cs 檔案，可以直接編譯執行。",
-        prevention, skillHint, description);
-
-    string response = _aiRouter.SendMessage(prompt, SYSTEM_INSTRUCTION);
-    // ... 後面不變
-}
-
-// 新增公開方法給 MainForm 呼叫
-public void RecordSkill(string userRequest, string finalCode, 
-    List<string> errorsFixed, int fixAttempts)
-{
-    _skills.CreateSkillFromSuccess(userRequest, finalCode, errorsFixed, fixAttempts);
-}
-
-public string GetSkillsSummary()
-{
-    return _skills.GetSkillsSummary();
-}
-
 
         /// <summary>
         /// 請 AI 修正編譯錯誤（接受錯誤列表）
@@ -205,16 +165,6 @@ public string GetSkillsSummary()
 
             return null;
         }
-public void RecordSkill(string userRequest, string finalCode,
-    List<string> errorsFixed, int fixAttempts)
-{
-    _skills.CreateSkillFromSuccess(userRequest, finalCode, errorsFixed, fixAttempts);
-}
-
-public string GetSkillsSummary()
-{
-    return _skills.GetSkillsSummary();
-}
 
         /// <summary>
         /// 記錄一次修復經驗
@@ -224,9 +174,29 @@ public string GetSkillsSummary()
             _memory.RecordLesson(errorCode, errorMessage, wrongCode, fixedCode);
         }
 
+        /// <summary>
+        /// 取得已累積的修復經驗數量
+        /// </summary>
         public int GetLessonCount()
         {
             return _memory.LessonCount;
+        }
+
+        /// <summary>
+        /// 記錄成功技能
+        /// </summary>
+        public void RecordSkill(string userRequest, string finalCode,
+            List<string> errorsFixed, int fixAttempts)
+        {
+            _skills.CreateSkillFromSuccess(userRequest, finalCode, errorsFixed, fixAttempts);
+        }
+
+        /// <summary>
+        /// 取得技能摘要
+        /// </summary>
+        public string GetSkillsSummary()
+        {
+            return _skills.GetSkillsSummary();
         }
 
         private string CleanDescription(string description)
