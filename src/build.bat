@@ -44,6 +44,7 @@ C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe ^
   UI\MainForm.Designer.cs ^
   UI\SettingsForm.cs ^
   UI\SettingsForm.Designer.cs
+src\Services\CodeGen\LessonMemory.cs
 
 copy /Y AIAgentTool.exe.config AIAgentTool.exe.config >nul 2>&1
 
