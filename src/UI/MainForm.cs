@@ -64,6 +64,27 @@ namespace AIAgentTool
             _taskRunner.OnProgressUpdate += TaskRunner_OnProgressUpdate;
             _taskRunner.OnError += TaskRunner_OnError;
             _taskRunner.Start();
+                        // 自動啟動 KoboldCpp
+            try
+            {
+                string koboldPath = @"D:\W7-AI-main\llama\koboldcpp-oldpc.exe";
+                string modelPath = @"D:\W7-AI-main\llama\qwen2.5-1.5b-instruct-q4_k_m.gguf";
+                if (File.Exists(koboldPath) && File.Exists(modelPath))
+                {
+                    bool alreadyRunning = false;
+                    System.Diagnostics.Process[] procs = System.Diagnostics.Process.GetProcessesByName("koboldcpp-oldpc");
+                    if (procs.Length > 0) alreadyRunning = true;
+                    if (!alreadyRunning)
+                    {
+                        System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo();
+                        psi.FileName = koboldPath;
+                        psi.Arguments = string.Format("--model \"{0}\" --port 5001 --threads 4", modelPath);
+                        psi.WindowStyle = System.Diagnostics.ProcessWindowStyle.Minimized;
+                        System.Diagnostics.Process.Start(psi);
+                    }
+                }
+            }
+            catch { }
 
             _sessionsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "chat_sessions");
             if (!Directory.Exists(_sessionsDir))
