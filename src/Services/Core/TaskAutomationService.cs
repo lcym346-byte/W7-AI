@@ -11,6 +11,7 @@ using AIAgentTool.Services.CodeGen;
 
 namespace AIAgentTool.Services.Core
 {
+
     /// <summary>
     /// 任務自動化服務 - 智慧 AI 代理，自動規劃並執行使用者指令
     /// </summary>
@@ -563,3 +564,4 @@ namespace AIAgentTool.Services.Core
         }
     }
 }
+public AiRouter AiRouter { get { return _aiRouter; } }
