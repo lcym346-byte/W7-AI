@@ -14,8 +14,9 @@ namespace AIAgentTool.Services.CodeGen
     public class CodeGeneratorService
     {
         private readonly AiRouter _aiRouter;
-        private readonly CodeTemplateLibrary _templates;
-        private readonly LessonMemory _memory;
+private readonly CodeTemplateLibrary _templates;
+private readonly LessonMemory _memory;
+private readonly SkillManager _skills;  // ← 加入這行
 
         private const string SYSTEM_INSTRUCTION =
             "你是一個 C# 程式碼生成器。請嚴格遵守以下規則：\n" +
@@ -54,11 +55,12 @@ namespace AIAgentTool.Services.CodeGen
                 "數字按鈕的 Click 事件中寫入 _lastFocusedTextBox。或者使用 txtMin.Focused / txtSec.Focused 判斷。\n";
 
         public CodeGeneratorService(AiRouter aiRouter)
-        {
-            _aiRouter = aiRouter;
-            _templates = new CodeTemplateLibrary();
-            _memory = new LessonMemory();
-        }
+{
+    _aiRouter = aiRouter;
+    _templates = new CodeTemplateLibrary();
+    _memory = new LessonMemory();
+    _skills = new SkillManager();  // ← 加入這行
+}
 
         /// <summary>
         /// 從自然語言描述生成程式碼
@@ -85,17 +87,18 @@ namespace AIAgentTool.Services.CodeGen
         /// 嘗試用 AI 生成程式碼（加入歷史經驗）
         /// </summary>
         private string TryAiGeneration(string description)
-        {
-            if (_aiRouter == null) return null;
+{
+    if (_aiRouter == null) return null;
 
-            string prevention = _memory.GetPreventionHints();
+    string prevention = _memory.GetPreventionHints();
+    string skillHint = _skills.GenerateSkillPrompt(description);  // ← 加入這行
 
-            string prompt = string.Format(
-                "{0}\n請用 C# (.NET Framework 4.0) 寫一個程式：{1}\n\n" +
-                "要求：完整的 .cs 檔案，可以直接編譯執行。",
-                prevention, description);
+    string prompt = string.Format(
+        "{0}\n{1}\n請用 C# (.NET Framework 4.0) 寫一個程式：{2}\n\n" +
+        "要求：完整的 .cs 檔案，可以直接編譯執行。",
+        prevention, skillHint, description);  // ← 修改這行
 
-            string response = _aiRouter.SendMessage(prompt, SYSTEM_INSTRUCTION);
+    string response = _aiRouter.SendMessage(prompt, SYSTEM_INSTRUCTION);
 
             if (string.IsNullOrEmpty(response))
                 return null;
@@ -202,6 +205,16 @@ public string GetSkillsSummary()
 
             return null;
         }
+public void RecordSkill(string userRequest, string finalCode,
+    List<string> errorsFixed, int fixAttempts)
+{
+    _skills.CreateSkillFromSuccess(userRequest, finalCode, errorsFixed, fixAttempts);
+}
+
+public string GetSkillsSummary()
+{
+    return _skills.GetSkillsSummary();
+}
 
         /// <summary>
         /// 記錄一次修復經驗
