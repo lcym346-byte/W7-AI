@@ -441,6 +441,27 @@ private void AutoCompileAndFix(string originalCode)
         tabMain.SelectedTab = tabChat;
         SetStatus("修復失敗");
     });
+    // 在 "✅ 編譯成功" 的區塊中，SaveSession 之後加入：
+
+// 記錄技能（學習迴圈）
+List<string> fixedErrors = new List<string>();
+if (finalResult != null && finalResult.Errors != null)
+{
+    foreach (string err in finalResult.Errors)
+        fixedErrors.Add(err);
+}
+_automationService.CodeGenerator.RecordSkill(
+    userRequirement, finalCode, fixedErrors, fixCount);
+
+// 記錄修復經驗
+if (fixCount > 0 && fixedErrors.Count > 0)
+{
+    Match errMatch = Regex.Match(fixedErrors[0], @"(CS\d{4})");
+    string errCode = errMatch.Success ? errMatch.Groups[1].Value : "UNKNOWN";
+    _automationService.CodeGenerator.RecordFixLesson(
+        errCode, fixedErrors[0], originalCode, finalCode);
+}
+
 }
 
 
