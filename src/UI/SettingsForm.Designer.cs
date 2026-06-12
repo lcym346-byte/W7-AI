@@ -279,7 +279,7 @@ namespace AIAgentTool
             lblAiStatus = new Label();
             lblAiStatus.Text = "\u72c0\u614b: \u672a\u6e2c\u8a66";
             lblAiStatus.Location = new Point(20, y);
-            lblAiStatus.Size = new Size(440, 40);
+            lblAiStatus.Size = new Size(440, 160);
             lblAiStatus.ForeColor = Color.Gray;
 
             // 加入控件到 AI 分頁
